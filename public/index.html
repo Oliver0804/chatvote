@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建立投票 - ChatVote 直播互動投票</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🗳️ ChatVote 直播互動投票</h1>
+            <nav class="nav-links">
+                <a href="/" class="btn-link active">建立投票</a>
+                <a href="/polls" class="btn-link">活動投票</a>
+            </nav>
+        </header>
+        
+        <main>
+            <div id="createForm" class="form-container">
+                <h2>📺 建立直播間投票</h2>
+                <p class="form-description">為您的直播間觀眾建立即時互動投票，支援 QR Code 快速分享！</p>
+                <form id="pollForm">
+                    <div class="form-group">
+                        <label for="question">投票問題：</label>
+                        <input type="text" id="question" placeholder="請輸入您的問題..." required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>選項：</label>
+                        <div id="optionsContainer">
+                            <div class="option-input">
+                                <input type="text" placeholder="選項 1" required>
+                                <button type="button" class="btn-remove" onclick="removeOption(this)" style="display: none;">❌</button>
+                            </div>
+                            <div class="option-input">
+                                <input type="text" placeholder="選項 2" required>
+                                <button type="button" class="btn-remove" onclick="removeOption(this)" style="display: none;">❌</button>
+                            </div>
+                        </div>
+                        <button type="button" id="addOption" class="btn-secondary">+ 新增選項</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="duration">投票時間（分鐘）：</label>
+                        <input type="number" id="duration" min="1" max="60" value="5" required>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">建立投票</button>
+                </form>
+            </div>
+            
+            <div id="resultContainer" class="result-container" style="display: none;">
+                <h2>投票已建立！</h2>
+                <div class="qr-container">
+                    <img id="qrCode" alt="QR Code">
+                </div>
+                <div class="url-container">
+                    <label>投票連結：</label>
+                    <div class="url-display">
+                        <input type="text" id="voteUrl" readonly>
+                        <button onclick="copyUrl()" class="btn-copy">複製</button>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <a id="resultLink" class="btn-primary" target="_blank">查看結果</a>
+                    <button onclick="createAnother()" class="btn-secondary">建立另一個投票</button>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="site-footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>快速連結</h4>
+                    <ul>
+                        <li><a href="/">建立投票</a></li>
+                        <li><a href="/polls">活動投票</a></li>
+                        <li><a href="https://github.com" target="_blank">GitHub 原始碼</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>維護資訊</h4>
+                    <ul>
+                        <li><a href="https://bashcat.net" target="_blank">🐱 BASHCAT.NET</a></li>
+                        <li><a href="https://hackmd.io" target="_blank">HackMD</a></li>
+                        <li><a href="https://discord.com" target="_blank">Discord</a></li>
+                        <li><a href="https://github.com" target="_blank">GitHub 原始碼</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>關於 ChatVote</h4>
+                    <p>ChatVote v1.0 - 直播互動投票系統<br>
+                    專為直播主與聊天室設計<br>
+                    支援 IP 防護、QR Code 快速分享<br>
+                    使用 Node.js + Socket.io 開發</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 ChatVote - 直播互動投票系統 | 由 <a href="https://bashcat.net" target="_blank">Bashcat</a> 維護 | MIT 授權開源</p>
+            </div>
+        </footer>
+    </div>
+    
+    <script src="/js/create.js"></script>
+</body>
+</html>

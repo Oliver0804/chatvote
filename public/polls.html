@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活動投票列表 - ChatVote 直播互動投票</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎥 ChatVote 活動投票</h1>
+            <nav class="nav-links">
+                <a href="/" class="btn-link">建立投票</a>
+                <a href="/polls" class="btn-link active">活動投票</a>
+                <button onclick="refreshPolls()" class="btn-secondary">🔄 重新整理</button>
+            </nav>
+        </header>
+        
+        <main>
+            <div id="loading" class="loading">載入中...</div>
+            <div id="pollsList" class="polls-list" style="display: none;"></div>
+            <div id="noPolls" class="no-polls" style="display: none;">
+                <h2>目前沒有進行中的投票</h2>
+                <p>點擊「建立新投票」來開始第一個投票</p>
+            </div>
+        </main>
+        
+        <footer class="site-footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>快速連結</h4>
+                    <ul>
+                        <li><a href="/">建立投票</a></li>
+                        <li><a href="/polls">活動投票</a></li>
+                        <li><a href="https://github.com" target="_blank">GitHub 原始碼</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>維護資訊</h4>
+                    <ul>
+                        <li><a href="https://bashcat.net" target="_blank">🐱 BASHCAT.NET</a></li>
+                        <li><a href="https://hackmd.io" target="_blank">HackMD</a></li>
+                        <li><a href="https://discord.com" target="_blank">Discord</a></li>
+                        <li><a href="https://github.com" target="_blank">GitHub 原始碼</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>關於 ChatVote</h4>
+                    <p>ChatVote v1.0 - 直播互動投票系統<br>
+                    專為直播主與聊天室設計<br>
+                    支援 IP 防護、QR Code 快速分享<br>
+                    使用 Node.js + Socket.io 開發</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 ChatVote - 直播互動投票系統 | 由 <a href="https://bashcat.net" target="_blank">Bashcat</a> 維護 | MIT 授權開源</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/polls.js"></script>
+</body>
+</html>
