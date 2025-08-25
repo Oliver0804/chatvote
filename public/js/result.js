@@ -9,9 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.emit('joinPoll', pollId);
 
     socket.on('voteUpdate', (data) => {
-        if (poll && poll.active) {
-            updateResults(data);
-        }
+        updateResults(data);
     });
 
     socket.on('pollEnded', () => {

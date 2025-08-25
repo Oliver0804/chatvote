@@ -528,13 +528,27 @@ main {
     justify-content: center;
 }
 
-/* Chart Container */
-.chart-container {
+/* Results Layout */
+.results-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
     margin: 30px 0;
+}
+
+.chart-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-container {
     padding: 20px;
     background: rgba(247, 250, 252, 0.5);
     border-radius: 15px;
     border: 1px solid #e2e8f0;
+    width: 100%;
+    max-width: 400px;
 }
 
 .chart-container canvas {
@@ -542,9 +556,30 @@ main {
     height: auto;
 }
 
+.table-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
 /* Results Table */
 .results-table {
-    margin-top: 30px;
+    background: rgba(247, 250, 252, 0.5);
+    border-radius: 15px;
+    border: 1px solid #e2e8f0;
+    padding: 20px;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .results-layout {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .chart-container {
+        max-width: 100%;
+    }
 }
 
 .results-table h3 {
