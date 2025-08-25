@@ -534,12 +534,14 @@ main {
     grid-template-columns: 1fr 1fr;
     gap: 30px;
     margin: 30px 0;
+    align-items: start;
 }
 
 .chart-section {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
+    padding-top: 20px;
 }
 
 .chart-container {
@@ -559,7 +561,7 @@ main {
 .table-section {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
 }
 
 /* Results Table */
@@ -715,41 +717,33 @@ main {
 .footer-content {
     display: flex;
     justify-content: center;
-    gap: 60px;
+    gap: 40px;
     margin-bottom: 20px;
     flex-wrap: wrap;
+    align-items: center;
 }
 
-.footer-section h4 {
-    color: #2d3748;
-    margin-bottom: 15px;
-    font-size: 1.1rem;
-    font-weight: 600;
+.footer-links {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.9rem;
 }
 
-.footer-section ul {
-    list-style: none;
-    padding: 0;
+.footer-label {
+    color: #718096;
+    font-weight: normal;
 }
 
-.footer-section li {
-    margin-bottom: 8px;
-}
-
-.footer-section a {
+.footer-links a {
     color: #4a5568;
     text-decoration: none;
     transition: color 0.3s ease;
+    font-weight: normal;
 }
 
-.footer-section a:hover {
+.footer-links a:hover {
     color: #4299e1;
-}
-
-.footer-section p {
-    color: #718096;
-    line-height: 1.6;
-    margin: 0;
 }
 
 .footer-bottom {
