@@ -15,6 +15,7 @@ app.use(express.static('public'));
 app.use(express.json());
 
 const polls = new Map();
+const expiredPolls = new Map(); // 保存已過期的投票，1週後清理
 
 function getClientIP(req) {
     return req.headers['x-forwarded-for'] || 
@@ -44,6 +45,28 @@ app.get('/api/active-polls', (req, res) => {
         }));
     
     res.json(activePolls);
+});
+
+// 新增 API：獲取歷史投票
+app.get('/api/history-polls', (req, res) => {
+    const historyPolls = Array.from(expiredPolls.values())
+        .sort((a, b) => (b.endTime || b.startTime) - (a.endTime || a.startTime)) // 按結束時間排序
+        .map(poll => ({
+            id: poll.id,
+            question: poll.question,
+            optionCount: poll.options.length,
+            totalVotes: poll.voterIPs.size,
+            createdAt: poll.startTime,
+            endedAt: poll.endTime || poll.startTime,
+            status: 'ended'
+        }));
+    
+    res.json(historyPolls);
+});
+
+// 新增路由：歷史投票頁面
+app.get('/history', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'history.html'));
 });
 
 app.get('/vote/:pollId', (req, res) => {
@@ -90,7 +113,13 @@ app.post('/api/create-poll', async (req, res) => {
     
     setTimeout(() => {
         if (polls.has(pollId)) {
-            polls.get(pollId).active = false;
+            const poll = polls.get(pollId);
+            poll.active = false;
+            poll.endTime = Date.now();
+            
+            // 將已結束的投票移至過期投票集合
+            expiredPolls.set(pollId, poll);
+            
             io.to(`poll_${pollId}`).emit('pollEnded');
         }
     }, poll.duration);
@@ -108,7 +137,12 @@ app.post('/api/create-poll', async (req, res) => {
 
 app.get('/api/poll/:pollId', (req, res) => {
     const pollId = req.params.pollId;
-    const poll = polls.get(pollId);
+    let poll = polls.get(pollId);
+    
+    // 如果活動投票中沒有，檢查過期投票
+    if (!poll) {
+        poll = expiredPolls.get(pollId);
+    }
     
     if (!poll) {
         return res.status(404).json({ error: '投票不存在' });
@@ -168,6 +202,24 @@ io.on('connection', (socket) => {
         console.log('用戶已斷開連接:', socket.id);
     });
 });
+
+// 定期清理過期投票（每小時檢查一次）
+setInterval(() => {
+    const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000); // 7天前
+    let cleanedCount = 0;
+    
+    for (const [pollId, poll] of expiredPolls.entries()) {
+        const endTime = poll.endTime || poll.startTime;
+        if (endTime < oneWeekAgo) {
+            expiredPolls.delete(pollId);
+            cleanedCount++;
+        }
+    }
+    
+    if (cleanedCount > 0) {
+        console.log(`已清理 ${cleanedCount} 個過期投票`);
+    }
+}, 60 * 60 * 1000); // 每小時執行一次
 
 server.listen(PORT, () => {
     console.log(`伺服器運行在端口 ${PORT}`);

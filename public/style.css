@@ -786,6 +786,37 @@ main {
     text-decoration: underline;
 }
 
+/* History Page Styles */
+.history-info {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 12px;
+    padding: 15px 20px;
+    margin-bottom: 25px;
+    color: #1e40af;
+}
+
+.history-info p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.poll-card.ended {
+    opacity: 0.9;
+}
+
+.poll-card.ended .poll-status.ended {
+    background: #6b7280;
+    color: white;
+}
+
+/* 添加歷史投票的統計顯示 */
+.poll-card .stat:nth-child(3),
+.poll-card .stat:nth-child(4) {
+    font-size: 0.85rem;
+}
+
 /* Utility Classes */
 .loading {
     text-align: center;

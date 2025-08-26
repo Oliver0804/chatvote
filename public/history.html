@@ -3,27 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>活動投票列表 - ChatVote 直播互動投票</title>
+    <title>歷史投票 - ChatVote 直播互動投票</title>
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🎥 ChatVote 活動投票</h1>
+            <h1>📈 ChatVote 歷史投票</h1>
             <nav class="nav-links">
                 <a href="/" class="btn-link">建立投票</a>
-                <a href="/polls" class="btn-link active">活動投票</a>
-                <a href="/history" class="btn-link">歷史投票</a>
-                <button onclick="refreshPolls()" class="btn-secondary">🔄 重新整理</button>
+                <a href="/polls" class="btn-link">活動投票</a>
+                <a href="/history" class="btn-link active">歷史投票</a>
+                <button onclick="refreshHistory()" class="btn-secondary">🔄 重新整理</button>
             </nav>
         </header>
         
         <main>
+            <div class="history-info">
+                <p>💡 這裡顯示過去7天內結束的投票，超過7天的投票會自動清理節省空間</p>
+            </div>
+            
             <div id="loading" class="loading">載入中...</div>
-            <div id="pollsList" class="polls-list" style="display: none;"></div>
-            <div id="noPolls" class="no-polls" style="display: none;">
-                <h2>目前沒有進行中的投票</h2>
-                <p>點擊「建立新投票」來開始第一個投票</p>
+            <div id="historyList" class="polls-list" style="display: none;"></div>
+            <div id="noHistory" class="no-polls" style="display: none;">
+                <h2>目前沒有歷史投票記錄</h2>
+                <p>投票結束後會出現在這裡，保存7天</p>
             </div>
         </main>
         
@@ -48,6 +52,6 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script src="/js/polls.js"></script>
+    <script src="/js/history.js"></script>
 </body>
 </html>
