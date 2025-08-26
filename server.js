@@ -4,6 +4,17 @@ const socketIo = require('socket.io');
 const path = require('path');
 const QRCode = require('qrcode');
 const { v4: uuidv4 } = require('uuid');
+const {
+    testConnection,
+    createPoll,
+    getPoll,
+    updatePollVote,
+    getActivePolls,
+    getHistoryPolls,
+    getUserPolls,
+    cleanupExpiredPolls,
+    updateExpiredPolls
+} = require('./lib/supabase');
 
 const app = express();
 const server = http.createServer(app);
@@ -14,15 +25,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.static('public'));
 app.use(express.json());
 
-const polls = new Map();
-const expiredPolls = new Map(); // 保存已過期的投票，根據用戶類型清理
-
-// 用戶類型配置
-const userRetentionConfig = {
-    'vip': 30 * 24 * 60 * 60 * 1000,      // VIP: 30天
-    'premium': 14 * 24 * 60 * 60 * 1000,  // 高級: 14天
-    'default': 7 * 24 * 60 * 60 * 1000    // 默認: 7天
-};
+// Supabase 替代了內存存儲，數據現在持久化在數據庫中
 
 function getClientIP(req) {
     return req.headers['x-forwarded-for'] || 
@@ -39,40 +42,50 @@ app.get('/polls', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'polls.html'));
 });
 
-app.get('/api/active-polls', (req, res) => {
-    const activePolls = Array.from(polls.values())
-        .filter(poll => poll.active)
-        .map(poll => ({
+app.get('/api/active-polls', async (req, res) => {
+    try {
+        const activePolls = await getActivePolls();
+        
+        const formattedPolls = activePolls.map(poll => ({
             id: poll.id,
             question: poll.question,
             optionCount: poll.options.length,
-            totalVotes: poll.voterIPs.size,
-            timeRemaining: Math.max(0, poll.duration - (Date.now() - poll.startTime)),
-            createdAt: poll.startTime,
-            createdBy: poll.createdBy || 'anonymous',
-            userType: poll.userType || 'default'
+            totalVotes: poll.total_votes || 0,
+            timeRemaining: Math.max(0, new Date(poll.expires_at) - Date.now()),
+            createdAt: new Date(poll.created_at).getTime(),
+            createdBy: poll.created_by || 'anonymous',
+            userType: poll.user_type || 'default'
         }));
-    
-    res.json(activePolls);
+        
+        res.json(formattedPolls);
+    } catch (error) {
+        console.error('獲取活躍投票失敗:', error);
+        res.status(500).json({ error: '無法獲取活躍投票' });
+    }
 });
 
 // 新增 API：獲取歷史投票
-app.get('/api/history-polls', (req, res) => {
-    const historyPolls = Array.from(expiredPolls.values())
-        .sort((a, b) => (b.endTime || b.startTime) - (a.endTime || a.startTime)) // 按結束時間排序
-        .map(poll => ({
+app.get('/api/history-polls', async (req, res) => {
+    try {
+        const historyPolls = await getHistoryPolls();
+        
+        const formattedPolls = historyPolls.map(poll => ({
             id: poll.id,
             question: poll.question,
             optionCount: poll.options.length,
-            totalVotes: poll.voterIPs.size,
-            createdAt: poll.startTime,
-            endedAt: poll.endTime || poll.startTime,
+            totalVotes: poll.total_votes || 0,
+            createdAt: new Date(poll.created_at).getTime(),
+            endedAt: new Date(poll.expires_at).getTime(),
             status: 'ended',
-            createdBy: poll.createdBy || 'anonymous',
-            userType: poll.userType || 'default'
+            createdBy: poll.created_by || 'anonymous',
+            userType: poll.user_type || 'default'
         }));
-    
-    res.json(historyPolls);
+        
+        res.json(formattedPolls);
+    } catch (error) {
+        console.error('獲取歷史投票失敗:', error);
+        res.status(500).json({ error: '無法獲取歷史投票' });
+    }
 });
 
 // 新增路由：歷史投票頁面
@@ -81,45 +94,46 @@ app.get('/history', (req, res) => {
 });
 
 // 新增 API：根據用戶 ID 獲取投票
-app.get('/api/user-polls/:userId', (req, res) => {
-    const userId = req.params.userId;
-    
-    // 獲取活躍投票
-    const activeUserPolls = Array.from(polls.values())
-        .filter(poll => poll.createdBy === userId)
-        .map(poll => ({
+app.get('/api/user-polls/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const userPolls = await getUserPolls(userId);
+        
+        // 格式化活躍投票
+        const activeUserPolls = userPolls.active.map(poll => ({
             id: poll.id,
             question: poll.question,
             optionCount: poll.options.length,
-            totalVotes: poll.voterIPs.size,
-            timeRemaining: Math.max(0, poll.duration - (Date.now() - poll.startTime)),
-            createdAt: poll.startTime,
+            totalVotes: poll.total_votes || 0,
+            timeRemaining: Math.max(0, new Date(poll.expires_at) - Date.now()),
+            createdAt: new Date(poll.created_at).getTime(),
             status: 'active',
-            createdBy: poll.createdBy,
-            userType: poll.userType
+            createdBy: poll.created_by,
+            userType: poll.user_type
         }));
-    
-    // 獲取歷史投票
-    const historyUserPolls = Array.from(expiredPolls.values())
-        .filter(poll => poll.createdBy === userId)
-        .sort((a, b) => (b.endTime || b.startTime) - (a.endTime || a.startTime))
-        .map(poll => ({
+        
+        // 格式化歷史投票
+        const historyUserPolls = userPolls.history.map(poll => ({
             id: poll.id,
             question: poll.question,
             optionCount: poll.options.length,
-            totalVotes: poll.voterIPs.size,
-            createdAt: poll.startTime,
-            endedAt: poll.endTime || poll.startTime,
+            totalVotes: poll.total_votes || 0,
+            createdAt: new Date(poll.created_at).getTime(),
+            endedAt: new Date(poll.expires_at).getTime(),
             status: 'ended',
-            createdBy: poll.createdBy,
-            userType: poll.userType
+            createdBy: poll.created_by,
+            userType: poll.user_type
         }));
-    
-    res.json({
-        active: activeUserPolls,
-        history: historyUserPolls,
-        total: activeUserPolls.length + historyUserPolls.length
-    });
+        
+        res.json({
+            active: activeUserPolls,
+            history: historyUserPolls,
+            total: userPolls.total
+        });
+    } catch (error) {
+        console.error('獲取用戶投票失敗:', error);
+        res.status(500).json({ error: '無法獲取用戶投票' });
+    }
 });
 
 // 新增路由：用戶投票頁面
@@ -127,18 +141,22 @@ app.get('/user/:userId', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'user.html'));
 });
 
-app.get('/vote/:pollId', (req, res) => {
+app.get('/vote/:pollId', async (req, res) => {
     const pollId = req.params.pollId;
-    if (polls.has(pollId)) {
+    const poll = await getPoll(pollId);
+    
+    if (poll) {
         res.sendFile(path.join(__dirname, 'public', 'vote.html'));
     } else {
         res.status(404).send('投票不存在或已結束');
     }
 });
 
-app.get('/result/:pollId', (req, res) => {
+app.get('/result/:pollId', async (req, res) => {
     const pollId = req.params.pollId;
-    if (polls.has(pollId)) {
+    const poll = await getPoll(pollId);
+    
+    if (poll) {
         res.sendFile(path.join(__dirname, 'public', 'result.html'));
     } else {
         res.status(404).send('投票不存在');
@@ -146,108 +164,146 @@ app.get('/result/:pollId', (req, res) => {
 });
 
 app.post('/api/create-poll', async (req, res) => {
-    const { question, options, duration, createdBy, userType } = req.body;
-    
-    if (!question || !options || !Array.isArray(options) || options.length < 2) {
-        return res.status(400).json({ error: '問題和至少兩個選項是必需的' });
-    }
-    
-    if (!duration || duration < 1 || duration > 60) {
-        return res.status(400).json({ error: '時間必須在1-60分鐘之間' });
-    }
-    
-    const pollId = uuidv4().substring(0, 8);
-    const poll = {
-        id: pollId,
-        question,
-        options: options.map(option => ({ text: option, votes: 0 })),
-        duration: duration * 60 * 1000,
-        startTime: Date.now(),
-        active: true,
-        voterIPs: new Set(),
-        createdBy: createdBy || 'anonymous',
-        userType: userType || 'default'
-    };
-    
-    polls.set(pollId, poll);
-    
-    setTimeout(() => {
-        if (polls.has(pollId)) {
-            const poll = polls.get(pollId);
-            poll.active = false;
-            poll.endTime = Date.now();
-            
-            // 將已結束的投票移至過期投票集合
-            expiredPolls.set(pollId, poll);
-            
-            io.to(`poll_${pollId}`).emit('pollEnded');
+    try {
+        const { question, options, duration, createdBy, userType } = req.body;
+        
+        if (!question || !options || !Array.isArray(options) || options.length < 2) {
+            return res.status(400).json({ error: '問題和至少兩個選項是必需的' });
         }
-    }, poll.duration);
-    
-    const voteUrl = `${req.protocol}://${req.get('host')}/vote/${pollId}`;
-    const qrCode = await QRCode.toDataURL(voteUrl);
-    
-    res.json({
-        pollId,
-        voteUrl,
-        qrCode,
-        resultUrl: `${req.protocol}://${req.get('host')}/result/${pollId}`
-    });
+        
+        if (!duration || duration < 1 || duration > 60) {
+            return res.status(400).json({ error: '時間必須在1-60分鐘之間' });
+        }
+        
+        // 準備投票數據
+        const pollData = {
+            question,
+            options: options.map(option => ({ text: option, votes: 0 })),
+            votes: options.reduce((acc, option) => {
+                acc[option] = 0;
+                return acc;
+            }, {}),
+            duration_minutes: duration,
+            created_by: createdBy || 'anonymous',
+            user_type: userType || 'default'
+        };
+        
+        // 創建投票到 Supabase
+        const poll = await createPoll(pollData);
+        
+        if (!poll) {
+            return res.status(500).json({ error: '創建投票失敗' });
+        }
+        
+        // 設定定時器來發送結束通知
+        setTimeout(async () => {
+            try {
+                await updateExpiredPolls();
+                io.to(`poll_${poll.id}`).emit('pollEnded');
+            } catch (error) {
+                console.error('更新過期投票狀態失敗:', error);
+            }
+        }, duration * 60 * 1000);
+        
+        const voteUrl = `${req.protocol}://${req.get('host')}/vote/${poll.id}`;
+        const qrCode = await QRCode.toDataURL(voteUrl);
+        
+        res.json({
+            pollId: poll.id,
+            voteUrl,
+            qrCode,
+            resultUrl: `${req.protocol}://${req.get('host')}/result/${poll.id}`
+        });
+    } catch (error) {
+        console.error('創建投票異常:', error);
+        res.status(500).json({ error: '創建投票失敗' });
+    }
 });
 
-app.get('/api/poll/:pollId', (req, res) => {
-    const pollId = req.params.pollId;
-    let poll = polls.get(pollId);
-    
-    // 如果活動投票中沒有，檢查過期投票
-    if (!poll) {
-        poll = expiredPolls.get(pollId);
+app.get('/api/poll/:pollId', async (req, res) => {
+    try {
+        const pollId = req.params.pollId;
+        const poll = await getPoll(pollId);
+        
+        if (!poll) {
+            return res.status(404).json({ error: '投票不存在' });
+        }
+        
+        const isActive = poll.is_active && new Date(poll.expires_at) > new Date();
+        const timeRemaining = isActive ? Math.max(0, new Date(poll.expires_at) - Date.now()) : 0;
+        
+        res.json({
+            id: poll.id,
+            question: poll.question,
+            options: poll.options,
+            active: isActive,
+            timeRemaining
+        });
+    } catch (error) {
+        console.error('獲取投票失敗:', error);
+        res.status(500).json({ error: '無法獲取投票資訊' });
     }
-    
-    if (!poll) {
-        return res.status(404).json({ error: '投票不存在' });
-    }
-    
-    res.json({
-        id: poll.id,
-        question: poll.question,
-        options: poll.options,
-        active: poll.active,
-        timeRemaining: poll.active ? Math.max(0, poll.duration - (Date.now() - poll.startTime)) : 0
-    });
 });
 
-app.post('/api/vote/:pollId', (req, res) => {
-    const pollId = req.params.pollId;
-    const { optionIndex } = req.body;
-    const poll = polls.get(pollId);
-    const clientIP = getClientIP(req);
-    
-    if (!poll) {
-        return res.status(404).json({ error: '投票不存在' });
+app.post('/api/vote/:pollId', async (req, res) => {
+    try {
+        const pollId = req.params.pollId;
+        const { optionIndex } = req.body;
+        const clientIP = getClientIP(req);
+        
+        const poll = await getPoll(pollId);
+        
+        if (!poll) {
+            return res.status(404).json({ error: '投票不存在' });
+        }
+        
+        const isActive = poll.is_active && new Date(poll.expires_at) > new Date();
+        if (!isActive) {
+            return res.status(400).json({ error: '投票已結束' });
+        }
+        
+        if (poll.voter_ips && poll.voter_ips.includes(clientIP)) {
+            return res.status(400).json({ error: '您已經投過票了' });
+        }
+        
+        if (optionIndex < 0 || optionIndex >= poll.options.length) {
+            return res.status(400).json({ error: '無效的選項' });
+        }
+        
+        // 更新投票數據
+        const selectedOption = poll.options[optionIndex].text;
+        const newVotes = { ...poll.votes };
+        newVotes[selectedOption] = (newVotes[selectedOption] || 0) + 1;
+        
+        const updatedPoll = await updatePollVote(pollId, newVotes, clientIP);
+        
+        if (!updatedPoll) {
+            return res.status(500).json({ error: '投票更新失敗' });
+        }
+        
+        // 計算總投票數
+        const totalVotes = updatedPoll.voter_ips.length;
+        
+        // 格式化選項數據以符合前端期待的格式
+        const formattedOptions = updatedPoll.options.map(option => ({
+            text: option.text,
+            votes: newVotes[option.text] || 0
+        }));
+        
+        io.to(`poll_${pollId}`).emit('voteUpdate', {
+            options: formattedOptions,
+            totalVotes
+        });
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('投票異常:', error);
+        if (error.message === '該IP已經投過票了') {
+            res.status(400).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: '投票失敗' });
+        }
     }
-    
-    if (!poll.active) {
-        return res.status(400).json({ error: '投票已結束' });
-    }
-    
-    if (poll.voterIPs.has(clientIP)) {
-        return res.status(400).json({ error: '您已經投過票了' });
-    }
-    
-    if (optionIndex < 0 || optionIndex >= poll.options.length) {
-        return res.status(400).json({ error: '無效的選項' });
-    }
-    
-    poll.options[optionIndex].votes++;
-    poll.voterIPs.add(clientIP);
-    
-    io.to(`poll_${pollId}`).emit('voteUpdate', {
-        options: poll.options,
-        totalVotes: poll.voterIPs.size
-    });
-    
-    res.json({ success: true });
 });
 
 io.on('connection', (socket) => {
@@ -263,28 +319,37 @@ io.on('connection', (socket) => {
     });
 });
 
-// 定期清理過期投票（每小時檢查一次）
-setInterval(() => {
-    const currentTime = Date.now();
-    let cleanedCount = 0;
-    
-    for (const [pollId, poll] of expiredPolls.entries()) {
-        const endTime = poll.endTime || poll.startTime;
-        const userType = poll.userType || 'default';
-        const retentionPeriod = userRetentionConfig[userType];
+// 定期清理過期投票和更新狀態（每小時檢查一次）
+setInterval(async () => {
+    try {
+        // 更新過期投票的狀態
+        await updateExpiredPolls();
         
-        // 檢查是否超過該用戶類型的保存期限
-        if (currentTime - endTime > retentionPeriod) {
-            expiredPolls.delete(pollId);
-            cleanedCount++;
-        }
-    }
-    
-    if (cleanedCount > 0) {
-        console.log(`已清理 ${cleanedCount} 個過期投票（根據用戶類型差異化保存）`);
+        // 清理根據用戶類型保存期限的投票
+        await cleanupExpiredPolls();
+    } catch (error) {
+        console.error('定期清理任務失敗:', error);
     }
 }, 60 * 60 * 1000); // 每小時執行一次
 
-server.listen(PORT, () => {
-    console.log(`伺服器運行在端口 ${PORT}`);
+// 啟動服務器並測試數據庫連接
+server.listen(PORT, async () => {
+    console.log(`🚀 ChatVote 服務器運行在端口 ${PORT}`);
+    
+    // 測試 Supabase 連接
+    const isConnected = await testConnection();
+    if (isConnected) {
+        console.log('🗄️ Supabase 數據庫連接正常');
+        
+        // 啟動後執行一次過期狀態更新
+        try {
+            await updateExpiredPolls();
+            console.log('📋 過期投票狀態已更新');
+        } catch (error) {
+            console.error('⚠️ 初始化過期投票狀態更新失敗:', error);
+        }
+    } else {
+        console.error('❌ Supabase 連接失敗，請檢查環境變數配置');
+        console.log('💡 請確保 .env 文件包含正確的 SUPABASE_URL 和 SUPABASE_ANON_KEY');
+    }
 });
