@@ -19,9 +19,11 @@
         </header>
         
         <!-- Google AdSense 廣告單元 -->
-        <div class="ad-container">
+        <div class="ad-container" style="min-height: 100px; border: 1px dashed #ccc; margin: 10px 0; position: relative;">
+            <div style="position: absolute; top: 5px; left: 5px; font-size: 12px; color: #666;">廣告區域</div>
             <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5218895047629495"
-                    crossorigin="anonymous"></script>
+                    crossorigin="anonymous"
+                    onerror="console.error('AdSense 腳本載入失敗')"></script>
             <!-- vote -->
             <ins class="adsbygoogle"
                  style="display:block"
@@ -30,7 +32,12 @@
                  data-ad-format="auto"
                  data-full-width-responsive="true"></ins>
             <script>
-                 (adsbygoogle = window.adsbygoogle || []).push({});
+                try {
+                    (adsbygoogle = window.adsbygoogle || []).push({});
+                    console.log('AdSense 廣告單元已推送');
+                } catch (e) {
+                    console.error('AdSense 廣告載入錯誤:', e);
+                }
             </script>
         </div>
         
@@ -102,7 +109,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2025 ChatVote - 互動投票系統 | 由 <a href="https://bashcat.net" target="_blank">Bashcat</a> 維護 | <a href="mailto:bashcat0804@gmail.com">bashcat0804@gmail.com</a> | <span class="version-info">v2.0.2</span></p>
+                <p>&copy; 2025 ChatVote - 互動投票系統 | 由 <a href="https://bashcat.net" target="_blank">Bashcat</a> 維護 | <a href="mailto:bashcat0804@gmail.com">bashcat0804@gmail.com</a> | <span class="version-info">v2.0.3</span></p>
             </div>
         </footer>
     </div>

@@ -17,6 +17,18 @@ const {
 } = require('./lib/supabase');
 
 const app = express();
+
+// 信任 Cloudflare 代理
+app.set('trust proxy', true);
+
+// Cloudflare 代理設定
+app.use((req, res, next) => {
+    // 記錄來源以便調試
+    if (req.get('host') === 'vote.bashcat.net') {
+        console.log(`正式域名訪問: ${req.get('x-forwarded-proto')}://${req.get('host')}${req.originalUrl}`);
+    }
+    next();
+});
 const server = http.createServer(app);
 const io = socketIo(server);
 
