@@ -28,10 +28,35 @@ app.use(express.json());
 // Supabase 替代了內存存儲，數據現在持久化在數據庫中
 
 function getClientIP(req) {
-    return req.headers['x-forwarded-for'] || 
-           req.connection.remoteAddress || 
-           req.socket.remoteAddress ||
-           (req.connection.socket ? req.connection.socket.remoteAddress : null);
+    // 在Docker環境中，真實IP通常在X-Forwarded-For或X-Real-IP中
+    const forwardedFor = req.headers['x-forwarded-for'];
+    if (forwardedFor) {
+        // X-Forwarded-For 可能包含多個IP，取第一個（原始客戶端IP）
+        return forwardedFor.split(',')[0].trim();
+    }
+    
+    const realIp = req.headers['x-real-ip'];
+    if (realIp) {
+        return realIp;
+    }
+    
+    // 其他可能的代理頭
+    const cfConnectingIp = req.headers['cf-connecting-ip'];
+    if (cfConnectingIp) {
+        return cfConnectingIp;
+    }
+    
+    // 直接連接的情況
+    const remoteAddr = req.connection.remoteAddress || 
+                      req.socket.remoteAddress ||
+                      (req.connection.socket ? req.connection.socket.remoteAddress : null);
+    
+    // 清理IPv6映射的IPv4地址
+    if (remoteAddr && remoteAddr.startsWith('::ffff:')) {
+        return remoteAddr.substring(7);
+    }
+    
+    return remoteAddr || 'unknown';
 }
 
 app.get('/', (req, res) => {

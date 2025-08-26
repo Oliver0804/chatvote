@@ -279,6 +279,19 @@ elif [ "$1" = "docker" ]; then
         esac
     fi
     
+    # 檢查是否需要重建Docker鏡像
+    if [[ "$2" == "--rebuild" ]] || [[ "$2" == "-r" ]]; then
+        echo "🔨 重建 Docker 鏡像..."
+        if command -v docker-compose &> /dev/null; then
+            docker-compose build --no-cache
+        elif docker compose version &> /dev/null; then
+            docker compose build --no-cache
+        else
+            docker build -t chatvote . --no-cache
+        fi
+        echo "✅ Docker 鏡像重建完成"
+    fi
+    
     # 保存端口配置並啟動 Docker
     save_port $DOCKER_PORT
     export EXTERNAL_PORT=$DOCKER_PORT
@@ -463,6 +476,7 @@ else
     echo "使用方法:"
     echo "  ./run.sh dev     - 開發模式運行（記憶上次端口）"
     echo "  ./run.sh docker  - Docker 模式運行（記憶上次端口）"
+    echo "  ./run.sh docker --rebuild - Docker 模式並重建鏡像"
     echo "  ./run.sh build   - 構建 Docker 映像"
     echo "  ./run.sh stop    - 智能停止所有 ChatVote 服務"
     echo "  ./run.sh logs    - 查看容器日誌"
