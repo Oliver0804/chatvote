@@ -1,7 +1,7 @@
 {
   "name": "chatvote",
   "version": "1.0.0",
-  "description": "ChatVote - 直播互動投票系統，專為直播主與聊天室設計",
+  "description": "ChatVote - 互動投票系統，支援即時投票與結果分享",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -20,9 +20,9 @@
     "realtime",
     "websocket",
     "poll",
-    "streaming",
-    "chat",
-    "live"
+    "interactive",
+    "survey",
+    "feedback"
   ],
   "author": "Bashcat (BASHCAT.NET)",
   "license": "MIT",
