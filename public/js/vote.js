@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.emit('joinPoll', pollId);
 
     socket.on('voteUpdate', (data) => {
+        console.log('接收到投票更新:', data);
         updateLiveResults(data);
     });
 
@@ -145,6 +146,18 @@ document.addEventListener('DOMContentLoaded', function() {
     function showVoted() {
         document.getElementById('voteContainer').style.display = 'none';
         document.getElementById('votedContainer').style.display = 'block';
+        
+        // 初始化即時結果顯示，使用當前數據
+        if (poll && poll.options) {
+            const totalVotes = poll.options.reduce((sum, option) => sum + (option.votes || 0), 0);
+            if (totalVotes > 0) {
+                // 確保有投票數據時立即顯示結果
+                updateLiveResults({
+                    options: poll.options,
+                    totalVotes: totalVotes
+                });
+            }
+        }
     }
 
     function showEnded() {

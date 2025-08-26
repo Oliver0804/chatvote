@@ -1,59 +1,61 @@
-# Google AdSense 設置說明
+# Google AdSense 設定說明
 
-## 已完成設置
+## 目前狀態
+- Publisher ID: ca-pub-5218895047629495 ✅
+- 廣告容器已添加到所有頁面 ✅
+- 廣告佔位符顯示正常 ✅
+- 等待實際廣告位 ID 設定 ⏳
 
-✅ **發布者ID已設置**: `ca-pub-5218895047629495`  
-✅ **所有頁面已添加廣告位置**: 在header和main之間  
-✅ **響應式設計**: 支持手機和桌面顯示  
-✅ **CSS樣式已完成**: 美觀的廣告容器設計
+## 設定步驟
 
-## 需要完成的設定
+### 1. 獲取廣告位 ID
+1. 登入 [Google AdSense 控制台](https://www.google.com/adsense/)
+2. 前往「廣告」→「概覽」→「按廣告單元」
+3. 點擊「+」創建新廣告單元
+4. 選擇「多媒體廣告」→「回應式」
+5. 設定廣告單元名稱（如：ChatVote-Header-Banner）
+6. 複製生成的廣告位 ID
 
-### 1. 在Google AdSense控制台獲取廣告位ID
-1. 登入 [Google AdSense](https://adsense.google.com/)
-2. 進入「廣告」→「依網站」
-3. 選擇「建立新廣告」
-4. 選擇「展示廣告」→「橫幅廣告」
-5. 設定廣告大小為「響應式」
-6. 複製產生的廣告位ID（格式：`1234567890`）
+### 2. 更新代碼
+將所有頁面中的廣告佔位符替換為實際 AdSense 代碼：
 
-### 2. 更新HTML檔案中的廣告位ID
-需要在以下檔案中將 `YOUR_AD_SLOT_ID` 替換為實際的廣告位ID：
-
-- `/public/index.html` - 首頁
-- `/public/polls.html` - 活動投票頁
-- `/public/history.html` - 歷史投票頁
-- `/public/vote.html` - 投票頁面
-- `/public/result.html` - 結果頁面
-- `/public/user.html` - 用戶頁面
-
-### 3. 替換指令
-```bash
-# 使用此指令一次性替換所有檔案
-find public -name "*.html" -exec sed -i '' 's/YOUR_AD_SLOT_ID/實際的廣告位ID/g' {} +
+```html
+<div class="ad-container">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5218895047629495"
+            crossorigin="anonymous"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-5218895047629495"
+         data-ad-slot="您的實際廣告位ID"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+</div>
 ```
 
-## 廣告位置說明
+### 3. 需要更新的檔案
+- [x] public/index.html
+- [x] public/polls.html  
+- [x] public/history.html
+- [x] public/vote.html
+- [x] public/result.html
+- [x] public/user.html
 
-廣告被放置在：
-- 📍 **位置**: 頁面標題列下方
-- 📱 **類型**: 響應式橫幅廣告
-- 📏 **大小**: 自適應（桌面推薦728x90，手機推薦320x50）
-- 🎨 **樣式**: 與網站設計一致的美觀容器
+## 廣告政策提醒
+1. 確保網站內容符合 AdSense 政策
+2. 避免點擊自己的廣告
+3. 廣告不應影響用戶體驗
+4. 保持合理的廣告密度
 
-## AdSense批准注意事項
+## 測試建議
+1. 部署到生產環境後測試廣告顯示
+2. 使用不同裝置確認響應式效果
+3. 檢查廣告是否會影響頁面功能
+4. 監控廣告收益和點擊率
 
-1. **內容品質**: 確保網站內容原創且有價值
-2. **導航清晰**: 網站結構清楚，用戶體驗良好
-3. **隱私政策**: 需要添加隱私政策頁面
-4. **流量要求**: 確保有穩定的自然流量
-
-## 測試和監控
-
-- 廣告部署後，請等待24-48小時讓AdSense審核
-- 使用Google AdSense控制台監控廣告表現
-- 定期檢查廣告是否正常顯示
-
----
-
-**注意**: 在獲得真實廣告位ID之前，廣告區域會顯示為空白或預留位置。
+## 備註
+- 廣告可能需要幾小時到幾天才會開始顯示
+- 新網站可能需要 AdSense 審核批准
+- 建議先用測試廣告確認功能正常
