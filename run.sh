@@ -229,9 +229,21 @@ elif [ "$1" = "docker" ]; then
         exit 0
     fi
     
-    # 獲取上次使用的端口
-    DOCKER_PORT=$(get_last_port)
-    echo "📌 上次使用端口：$DOCKER_PORT"
+    # 檢查是否使用生產配置
+    COMPOSE_FILE="docker-compose.yml"
+    if [ "$2" = "prod" ] || [ "$2" = "production" ]; then
+        COMPOSE_FILE="docker-compose.prod.yml"
+        echo "🏭 使用生產配置 (Nginx 反向代理)"
+    fi
+    
+    # 獲取上次使用的端口（生產模式使用 80 端口）
+    if [ "$COMPOSE_FILE" = "docker-compose.prod.yml" ]; then
+        DOCKER_PORT=80
+        echo "📌 生產模式使用端口：$DOCKER_PORT"
+    else
+        DOCKER_PORT=$(get_last_port)
+        echo "📌 上次使用端口：$DOCKER_PORT"
+    fi
     
     # 檢查端口並處理衝突
     if check_port $DOCKER_PORT; then
@@ -315,7 +327,16 @@ elif [ "$1" = "docker" ]; then
     
     # 嘗試使用 docker-compose 或 docker compose
     if command -v docker-compose &> /dev/null; then
-        if EXTERNAL_PORT=$DOCKER_PORT docker-compose up -d 2>/dev/null; then
+        if [ "$COMPOSE_FILE" = "docker-compose.prod.yml" ]; then
+            if docker-compose -f $COMPOSE_FILE up -d --build 2>/dev/null; then
+                echo "✅ Docker 容器已啟動 (生產模式 + Nginx)"
+                echo "📍 應用地址: http://localhost:$DOCKER_PORT"
+                echo "🌐 生產域名: https://vote.bashcat.net"
+            else
+                echo "❌ 生產模式 Docker Compose 啟動失敗"
+                exit 1
+            fi
+        elif EXTERNAL_PORT=$DOCKER_PORT docker-compose up -d 2>/dev/null; then
             echo "✅ Docker 容器已啟動"
             echo "📍 應用地址: http://localhost:$DOCKER_PORT"
         else
@@ -370,7 +391,16 @@ elif [ "$1" = "docker" ]; then
             fi
         fi
     elif docker compose version &> /dev/null; then
-        if EXTERNAL_PORT=$DOCKER_PORT docker compose up -d; then
+        if [ "$COMPOSE_FILE" = "docker-compose.prod.yml" ]; then
+            if docker compose -f $COMPOSE_FILE up -d --build; then
+                echo "✅ Docker 容器已啟動 (生產模式 + Nginx)"
+                echo "📍 應用地址: http://localhost:$DOCKER_PORT"
+                echo "🌐 生產域名: https://vote.bashcat.net"
+            else
+                echo "❌ 生產模式 Docker Compose 啟動失敗"
+                exit 1
+            fi
+        elif EXTERNAL_PORT=$DOCKER_PORT docker compose up -d; then
             echo "✅ Docker 容器已啟動"
             echo "📍 應用地址: http://localhost:$DOCKER_PORT"
         else
@@ -490,22 +520,25 @@ elif [ "$1" = "restart" ]; then
     npm run dev
 else
     echo "使用方法:"
-    echo "  ./run.sh dev     - 開發模式運行（記憶上次端口）"
-    echo "  ./run.sh docker  - Docker 模式運行（記憶上次端口）"
-    echo "  ./run.sh docker --rebuild - Docker 模式並重建鏡像"
-    echo "  ./run.sh build   - 構建 Docker 映像"
-    echo "  ./run.sh stop    - 智能停止所有 ChatVote 服務"
-    echo "  ./run.sh logs    - 查看容器日誌"
-    echo "  ./run.sh clean   - 清理容器和映像"
-    echo "  ./run.sh restart - 重新啟動服務（使用上次端口）"
+    echo "  ./run.sh dev               - 開發模式運行（記憶上次端口）"
+    echo "  ./run.sh docker            - Docker 模式運行（記憶上次端口）"
+    echo "  ./run.sh docker prod       - Docker 生產模式 (Nginx 反向代理，端口 80)"
+    echo "  ./run.sh docker --rebuild  - Docker 模式並重建鏡像"
+    echo "  ./run.sh build             - 構建 Docker 映像"
+    echo "  ./run.sh stop              - 智能停止所有 ChatVote 服務"
+    echo "  ./run.sh logs              - 查看容器日誌"
+    echo "  ./run.sh clean             - 清理容器和映像"
+    echo "  ./run.sh restart           - 重新啟動服務（使用上次端口）"
     echo ""
     echo "✨ 新功能:"
     echo "  🔍 智能端口記憶：自動記住上次使用的端口"
     echo "  🛑 智能服務停止：自動檢測並停止 ChatVote 相關進程"
     echo "  🔄 一鍵重啟：選項2可自動停止所有服務並重新啟動"
+    echo "  🏭 生產模式：Nginx 反向代理 + SSL 支援，適用於 vote.bashcat.net"
     echo ""
     echo "快速開始:"
-    echo "  開發: ./run.sh dev"
-    echo "  生產: ./run.sh docker"
-    echo "  停止: ./run.sh stop"
+    echo "  開發測試: ./run.sh dev"
+    echo "  Docker測試: ./run.sh docker"
+    echo "  生產部署: ./run.sh docker prod"
+    echo "  停止服務: ./run.sh stop"
 fi

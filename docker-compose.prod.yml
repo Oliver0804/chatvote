@@ -1,10 +1,23 @@
 version: '3.8'
 
 services:
-  voting-system:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - chatvote
+    restart: unless-stopped
+    networks:
+      - voting-network
+
+  chatvote:
     build: .
     ports:
-      - "80:3000"
+      - "3000:3000"  # 僅內部網路訪問
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -18,9 +31,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    volumes: []
-      # 如果需要持久化資料，可以取消註解下面這行
-      # - ./data:/app/data
     networks:
       - voting-network
 
