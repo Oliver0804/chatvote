@@ -282,6 +282,22 @@ elif [ "$1" = "docker" ]; then
     # 檢查是否需要重建Docker鏡像
     if [[ "$2" == "--rebuild" ]] || [[ "$2" == "-r" ]]; then
         echo "🔨 重建 Docker 鏡像..."
+        
+        # 先停止並移除舊容器和鏡像
+        echo "🛑 停止並清理舊容器..."
+        if command -v docker-compose &> /dev/null; then
+            docker-compose down 2>/dev/null || true
+        elif docker compose version &> /dev/null; then
+            docker compose down 2>/dev/null || true
+        fi
+        
+        # 移除舊的ChatVote相關容器和鏡像
+        docker stop chatvote-voting-system-1 2>/dev/null || true
+        docker rm chatvote-voting-system-1 2>/dev/null || true
+        docker rmi chatvote-voting-system 2>/dev/null || true
+        docker rmi chatvote 2>/dev/null || true
+        
+        # 重建鏡像
         if command -v docker-compose &> /dev/null; then
             docker-compose build --no-cache
         elif docker compose version &> /dev/null; then
