@@ -596,7 +596,7 @@ main .not-found {
 /* Results Layout */
 .results-layout {
     display: grid;
-    grid-template-columns: 1.2fr 0.8fr;
+    grid-template-columns: 1fr 1fr;
     gap: 30px;
     margin: 30px 0;
     align-items: stretch;
@@ -628,6 +628,27 @@ main .not-found {
     width: 100% !important;
     height: 350px !important;
     flex-shrink: 0;
+}
+
+/* 確保桌面模式下圓餅圖有足夠空間 */
+@media (min-width: 769px) {
+    .container {
+        max-width: 1200px; /* 加寬整體容器 */
+    }
+    
+    .result-container {
+        max-width: 1000px; /* 增加結果容器寬度 */
+    }
+    
+    .chart-container {
+        min-width: 400px;
+        width: 100%;
+    }
+    
+    .results-layout {
+        grid-template-columns: 1fr 1fr;
+        gap: 40px; /* 增加間距 */
+    }
 }
 
 .table-section {

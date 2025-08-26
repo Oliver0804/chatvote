@@ -44,16 +44,12 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('resultUrl').value = window.location.href;
         
         updateStatusBadge();
-        // 確保選項有正確的投票數格式
-        const formattedOptions = poll.options.map(option => ({
-            text: typeof option === 'string' ? option : (option.text || option),
-            votes: typeof option === 'string' ? 0 : (option.votes || 0)
-        }));
+        // 使用服務器返回的格式化選項數據（已包含正確投票數）
+        const formattedOptions = poll.options;
+        const totalVotes = formattedOptions.reduce((sum, option) => sum + (option.votes || 0), 0);
         
-        const totalVotes = formattedOptions.reduce((sum, option) => sum + option.votes, 0);
-        
-        console.log('格式化後的選項:', formattedOptions);
-        console.log('總投票數:', totalVotes);
+        console.log('接收到的選項數據:', poll.options);
+        console.log('計算總投票數:', totalVotes);
         
         updateResults({
             options: formattedOptions,
@@ -131,8 +127,22 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (!chart) {
-            const ctx = document.getElementById('pieChart').getContext('2d');
-            chart = new Chart(ctx, {
+            const canvas = document.getElementById('pieChart');
+            
+            if (!canvas) {
+                console.error('找不到 pieChart 元素！');
+                return;
+            }
+            
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js 未加載！');
+                return;
+            }
+            
+            const ctx = canvas.getContext('2d');
+            
+            try {
+                chart = new Chart(ctx, {
                 type: 'pie',
                 data: {
                     labels: options.map(option => option.text),
@@ -145,34 +155,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: 'bottom',
-                            labels: {
-                                padding: 20,
-                                font: {
-                                    size: 14
-                                }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.raw;
-                                    const percentage = ((value / totalVotes) * 100).toFixed(1);
-                                    return `${label}: ${value} 票 (${percentage}%)`;
-                                }
-                            }
+                            position: 'bottom'
                         }
-                    },
-                    animation: {
-                        animateScale: true,
-                        animateRotate: true
                     }
                 }
             });
+            
+            // 強制重繪圓餅圖，解決桌面模式顯示問題
+            setTimeout(() => {
+                if (chart) {
+                    chart.resize();
+                }
+            }, 100);
+            } catch (error) {
+                console.error('創建 Chart 時發生錯誤:', error);
+                return;
+            }
         } else {
             chart.data.labels = options.map(option => option.text);
             chart.data.datasets[0].data = options.map(option => option.votes);

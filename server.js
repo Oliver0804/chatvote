@@ -283,10 +283,11 @@ app.get('/api/poll/:pollId', async (req, res) => {
         const isActive = poll.is_active && new Date(poll.expires_at) > new Date();
         const timeRemaining = isActive ? Math.max(0, new Date(poll.expires_at) - Date.now()) : 0;
         
-        // 格式化選項數據，確保包含投票數
+        // 確保選項數據包含正確投票數（處理舊數據兼容性）
         const formattedOptions = poll.options.map(option => {
-            const optionText = typeof option === 'string' ? option : (option.text || option);
-            const votes = poll.votes ? (poll.votes[optionText] || 0) : (option.votes || 0);
+            const optionText = option.text;
+            // 如果option.votes為0或不存在，優先使用poll.votes中的數據
+            const votes = (option.votes && option.votes > 0) ? option.votes : (poll.votes && poll.votes[optionText] ? poll.votes[optionText] : 0);
             return {
                 text: optionText,
                 votes: parseInt(votes) || 0
