@@ -106,6 +106,11 @@ app.get('/api/history-polls', async (req, res) => {
     try {
         const historyPolls = await getHistoryPolls();
         
+        console.log('歷史投票查詢結果:', {
+            count: historyPolls.length,
+            polls: historyPolls.map(p => ({ id: p.id, question: p.question, is_active: p.is_active }))
+        });
+        
         const formattedPolls = historyPolls.map(poll => {
             // 計算最高票選項
             let winnerOption = '無投票';

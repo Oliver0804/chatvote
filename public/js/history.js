@@ -7,13 +7,22 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('noHistory').style.display = 'none';
 
         fetch('/api/history-polls')
-            .then(response => response.json())
+            .then(response => {
+                console.log('歷史投票 API 回應狀態:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(history => {
+                console.log('收到歷史投票數據:', history);
                 document.getElementById('loading').style.display = 'none';
                 
-                if (history.length === 0) {
+                if (!history || history.length === 0) {
+                    console.log('沒有歷史投票數據');
                     document.getElementById('noHistory').style.display = 'block';
                 } else {
+                    console.log('顯示歷史投票:', history.length, '筆');
                     displayHistory(history);
                 }
             })
