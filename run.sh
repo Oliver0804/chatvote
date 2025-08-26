@@ -7,6 +7,9 @@ echo "🎭 ChatVote 直播互動投票系統 - 快速啟動"
 echo "由 Bashcat (BASHCAT.NET) 維護"
 echo ""
 
+# 端口配置文件
+PORT_CONFIG_FILE=".chatvote_port"
+
 # 檢查端口是否被佔用
 check_port() {
     local port=${1:-3000}
@@ -44,41 +47,139 @@ validate_port() {
     fi
 }
 
-# 停止佔用端口 3000 的進程
+# 停止佔用指定端口的進程
 stop_port_process() {
-    echo "🛑 停止佔用端口 3000 的進程..."
+    local port=${1:-3000}
+    echo "🛑 停止佔用端口 $port 的進程..."
+    
+    # 嘗試 lsof
     if command -v lsof >/dev/null 2>&1; then
-        local pid=$(lsof -ti:3000)
+        local pid=$(lsof -ti:$port 2>/dev/null)
         if [ -n "$pid" ]; then
             kill -TERM $pid 2>/dev/null || kill -KILL $pid 2>/dev/null
             sleep 2
             echo "✅ 已停止進程 $pid"
+            return 0
         fi
-    else
-        echo "⚠️  lsof 未安裝，無法自動停止進程"
-        echo "請手動停止佔用端口 3000 的進程"
     fi
+    
+    # 嘗試使用 ss 和 awk 找到進程
+    if command -v ss >/dev/null 2>&1; then
+        local pid=$(ss -tlnp | grep ":$port " | awk -F'pid=' '{print $2}' | awk -F',' '{print $1}' | head -1)
+        if [ -n "$pid" ]; then
+            kill -TERM $pid 2>/dev/null || kill -KILL $pid 2>/dev/null
+            sleep 2
+            echo "✅ 已停止進程 $pid"
+            return 0
+        fi
+    fi
+    
+    # 嘗試 netstat 方式
+    if command -v netstat >/dev/null 2>&1; then
+        local pid=$(netstat -tlnp 2>/dev/null | grep ":$port " | awk '{print $7}' | cut -d'/' -f1 | head -1)
+        if [ -n "$pid" ] && [ "$pid" != "-" ]; then
+            kill -TERM $pid 2>/dev/null || kill -KILL $pid 2>/dev/null
+            sleep 2
+            echo "✅ 已停止進程 $pid"
+            return 0
+        fi
+    fi
+    
+    echo "⚠️  無法自動停止端口 $port 的進程，請手動處理"
+    return 1
+}
+
+# 保存端口配置
+save_port() {
+    local port=$1
+    echo "$port" > "$PORT_CONFIG_FILE"
+}
+
+# 讀取上次使用的端口
+get_last_port() {
+    if [ -f "$PORT_CONFIG_FILE" ]; then
+        local saved_port=$(cat "$PORT_CONFIG_FILE" 2>/dev/null)
+        if validate_port "$saved_port"; then
+            echo "$saved_port"
+            return 0
+        fi
+    fi
+    echo "3000"
+}
+
+# 停止 ChatVote 服務
+stop_chatvote_service() {
+    echo "🛑 正在停止 ChatVote 服務..."
+    
+    # 停止 Docker 容器
+    if command -v docker >/dev/null 2>&1; then
+        if command -v docker-compose >/dev/null 2>&1; then
+            docker-compose down 2>/dev/null
+        fi
+        if docker compose version >/dev/null 2>&1; then
+            docker compose down 2>/dev/null
+        fi
+        
+        # 停止可能的 ChatVote 容器
+        docker ps -q --filter "name=chatvote" | xargs -r docker stop 2>/dev/null
+        docker ps -q --filter "name=voting-system" | xargs -r docker stop 2>/dev/null
+    fi
+    
+    # 停止可能佔用記錄端口的進程
+    local last_port=$(get_last_port)
+    if check_port "$last_port"; then
+        stop_port_process "$last_port"
+    fi
+    
+    # 停止其他常見端口的 Node.js 進程
+    for port in 3000 3001 3002 3003 3004 3005 3006; do
+        if check_port "$port"; then
+            local pid=$(lsof -ti:$port 2>/dev/null | head -1)
+            if [ -n "$pid" ]; then
+                local cmd=$(ps -p $pid -o comm= 2>/dev/null)
+                if [[ "$cmd" =~ node|npm|nodemon ]]; then
+                    echo "🔍 發現端口 $port 上的 Node.js 進程 (PID: $pid)"
+                    stop_port_process "$port"
+                fi
+            fi
+        fi
+    done
+    
+    echo "✅ ChatVote 服務已停止"
 }
 
 # 檢查參數
 if [ "$1" = "dev" ]; then
     echo "🚀 啟動開發模式..."
     
+    # 獲取上次使用的端口
+    PORT=$(get_last_port)
+    echo "📌 上次使用端口：$PORT"
+    
     # 檢查端口衝突並處理
-    PORT=3000
     if check_port $PORT; then
         echo "⚠️  端口 $PORT 已被佔用"
         echo "請選擇處理方式："
         echo "1) 停止現有進程並使用端口 $PORT"
-        echo "2) 使用其他端口"
-        echo "3) 取消啟動"
-        read -p "請選擇 (1/2/3): " choice
+        echo "2) 自動停止所有 ChatVote 服務並重新啟動"
+        echo "3) 使用其他端口"
+        echo "4) 取消啟動"
+        read -p "請選擇 (1/2/3/4): " choice
         
         case $choice in
             1)
-                stop_port_process
+                stop_port_process $PORT
                 ;;
             2)
+                stop_chatvote_service
+                sleep 1
+                # 重新檢查端口
+                if check_port $PORT; then
+                    echo "⚠️  自動清理後端口 $PORT 仍被佔用，嘗試強制停止..."
+                    stop_port_process $PORT
+                fi
+                ;;
+            3)
                 while true; do
                     read -p "請輸入新的端口號 (1024-65535): " new_port
                     if validate_port $new_port; then
@@ -94,14 +195,15 @@ if [ "$1" = "dev" ]; then
                     fi
                 done
                 ;;
-            3|*)
+            4|*)
                 echo "❌ 取消啟動"
                 exit 1
                 ;;
         esac
     fi
     
-    # 設定環境變數並啟動
+    # 保存端口配置並啟動
+    save_port $PORT
     export PORT=$PORT
     echo "🚀 在端口 $PORT 啟動開發模式..."
     npm run dev
@@ -127,21 +229,34 @@ elif [ "$1" = "docker" ]; then
         exit 0
     fi
     
+    # 獲取上次使用的端口
+    DOCKER_PORT=$(get_last_port)
+    echo "📌 上次使用端口：$DOCKER_PORT"
+    
     # 檢查端口並處理衝突
-    DOCKER_PORT=3000
     if check_port $DOCKER_PORT; then
         echo "⚠️  端口 $DOCKER_PORT 已被佔用"
         echo "請選擇處理方式："
         echo "1) 停止現有進程並使用端口 $DOCKER_PORT"
-        echo "2) 使用其他端口"
-        echo "3) 取消啟動"
-        read -p "請選擇 (1/2/3): " choice
+        echo "2) 自動停止所有 ChatVote 服務並重新啟動"
+        echo "3) 使用其他端口"
+        echo "4) 取消啟動"
+        read -p "請選擇 (1/2/3/4): " choice
         
         case $choice in
             1)
-                stop_port_process
+                stop_port_process $DOCKER_PORT
                 ;;
             2)
+                stop_chatvote_service
+                sleep 1
+                # 重新檢查端口
+                if check_port $DOCKER_PORT; then
+                    echo "⚠️  自動清理後端口 $DOCKER_PORT 仍被佔用，嘗試強制停止..."
+                    stop_port_process $DOCKER_PORT
+                fi
+                ;;
+            3)
                 while true; do
                     read -p "請輸入新的端口號 (1024-65535): " new_port
                     if validate_port $new_port; then
@@ -157,14 +272,15 @@ elif [ "$1" = "docker" ]; then
                     fi
                 done
                 ;;
-            3|*)
+            4|*)
                 echo "❌ 取消啟動"
                 exit 1
                 ;;
         esac
     fi
     
-    # 設定環境變數並啟動 Docker
+    # 保存端口配置並啟動 Docker
+    save_port $DOCKER_PORT
     export EXTERNAL_PORT=$DOCKER_PORT
     echo "🐳 在端口 $DOCKER_PORT 啟動 Docker 容器..."
     
@@ -219,6 +335,7 @@ elif [ "$1" = "docker" ]; then
                             ;;
                     esac
                 fi
+                save_port $DOCKER_PORT
                 export PORT=$DOCKER_PORT
                 npm run dev
             fi
@@ -321,19 +438,7 @@ elif [ "$1" = "build" ]; then
     echo "✅ Docker 映像構建完成"
 elif [ "$1" = "stop" ]; then
     echo "⏹️  停止服務..."
-    
-    # 停止 Docker 容器
-    if command -v docker-compose >/dev/null 2>&1; then
-        docker-compose down 2>/dev/null
-    fi
-    if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
-        docker compose down 2>/dev/null
-    fi
-    
-    # 停止端口 3000 的進程
-    stop_port_process
-    
-    echo "✅ 所有服務已停止"
+    stop_chatvote_service
 elif [ "$1" = "logs" ]; then
     echo "📋 查看容器日誌..."
     docker-compose logs -f
@@ -346,28 +451,28 @@ elif [ "$1" = "restart" ]; then
     echo "🔄 重新啟動服務..."
     
     # 停止現有服務
-    if command -v docker-compose >/dev/null 2>&1; then
-        docker-compose down 2>/dev/null
-    fi
-    if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
-        docker compose down 2>/dev/null
-    fi
-    stop_port_process
-    
+    stop_chatvote_service
     sleep 2
     
-    # 重新啟動（默認使用開發模式）
-    echo "🚀 重新啟動開發模式..."
+    # 獲取上次使用的端口並重新啟動
+    restart_port=$(get_last_port)
+    echo "🚀 在端口 $restart_port 重新啟動開發模式..."
+    export PORT=$restart_port
     npm run dev
 else
     echo "使用方法:"
-    echo "  ./run.sh dev     - 開發模式運行"
-    echo "  ./run.sh docker  - Docker 模式運行"
+    echo "  ./run.sh dev     - 開發模式運行（記憶上次端口）"
+    echo "  ./run.sh docker  - Docker 模式運行（記憶上次端口）"
     echo "  ./run.sh build   - 構建 Docker 映像"
-    echo "  ./run.sh stop    - 停止所有服務"
+    echo "  ./run.sh stop    - 智能停止所有 ChatVote 服務"
     echo "  ./run.sh logs    - 查看容器日誌"
     echo "  ./run.sh clean   - 清理容器和映像"
-    echo "  ./run.sh restart - 重新啟動服務"
+    echo "  ./run.sh restart - 重新啟動服務（使用上次端口）"
+    echo ""
+    echo "✨ 新功能:"
+    echo "  🔍 智能端口記憶：自動記住上次使用的端口"
+    echo "  🛑 智能服務停止：自動檢測並停止 ChatVote 相關進程"
+    echo "  🔄 一鍵重啟：選項2可自動停止所有服務並重新啟動"
     echo ""
     echo "快速開始:"
     echo "  開發: ./run.sh dev"
