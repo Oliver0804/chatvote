@@ -42,6 +42,22 @@
                     </div>
                     
                     <div class="form-group">
+                        <label for="createdBy">用戶 ID（可選）：</label>
+                        <input type="text" id="createdBy" placeholder="例如：oliver0804" maxlength="50">
+                        <small class="form-hint">用於分類和查詢您的投票，不填寫則為匿名</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="userType">用戶類型：</label>
+                        <select id="userType">
+                            <option value="default">一般用戶（保存7天）</option>
+                            <option value="premium">高級用戶（保存14天）</option>
+                            <option value="vip">VIP用戶（保存30天）</option>
+                        </select>
+                        <small class="form-hint">不同用戶類型有不同的數據保存期限</small>
+                    </div>
+                    
+                    <div class="form-group">
                         <label for="duration">投票時間（分鐘）：</label>
                         <input type="number" id="duration" min="1" max="60" value="5" required>
                     </div>

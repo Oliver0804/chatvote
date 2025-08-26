@@ -15,7 +15,14 @@ app.use(express.static('public'));
 app.use(express.json());
 
 const polls = new Map();
-const expiredPolls = new Map(); // 保存已過期的投票，1週後清理
+const expiredPolls = new Map(); // 保存已過期的投票，根據用戶類型清理
+
+// 用戶類型配置
+const userRetentionConfig = {
+    'vip': 30 * 24 * 60 * 60 * 1000,      // VIP: 30天
+    'premium': 14 * 24 * 60 * 60 * 1000,  // 高級: 14天
+    'default': 7 * 24 * 60 * 60 * 1000    // 默認: 7天
+};
 
 function getClientIP(req) {
     return req.headers['x-forwarded-for'] || 
@@ -41,7 +48,9 @@ app.get('/api/active-polls', (req, res) => {
             optionCount: poll.options.length,
             totalVotes: poll.voterIPs.size,
             timeRemaining: Math.max(0, poll.duration - (Date.now() - poll.startTime)),
-            createdAt: poll.startTime
+            createdAt: poll.startTime,
+            createdBy: poll.createdBy || 'anonymous',
+            userType: poll.userType || 'default'
         }));
     
     res.json(activePolls);
@@ -58,7 +67,9 @@ app.get('/api/history-polls', (req, res) => {
             totalVotes: poll.voterIPs.size,
             createdAt: poll.startTime,
             endedAt: poll.endTime || poll.startTime,
-            status: 'ended'
+            status: 'ended',
+            createdBy: poll.createdBy || 'anonymous',
+            userType: poll.userType || 'default'
         }));
     
     res.json(historyPolls);
@@ -67,6 +78,53 @@ app.get('/api/history-polls', (req, res) => {
 // 新增路由：歷史投票頁面
 app.get('/history', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'history.html'));
+});
+
+// 新增 API：根據用戶 ID 獲取投票
+app.get('/api/user-polls/:userId', (req, res) => {
+    const userId = req.params.userId;
+    
+    // 獲取活躍投票
+    const activeUserPolls = Array.from(polls.values())
+        .filter(poll => poll.createdBy === userId)
+        .map(poll => ({
+            id: poll.id,
+            question: poll.question,
+            optionCount: poll.options.length,
+            totalVotes: poll.voterIPs.size,
+            timeRemaining: Math.max(0, poll.duration - (Date.now() - poll.startTime)),
+            createdAt: poll.startTime,
+            status: 'active',
+            createdBy: poll.createdBy,
+            userType: poll.userType
+        }));
+    
+    // 獲取歷史投票
+    const historyUserPolls = Array.from(expiredPolls.values())
+        .filter(poll => poll.createdBy === userId)
+        .sort((a, b) => (b.endTime || b.startTime) - (a.endTime || a.startTime))
+        .map(poll => ({
+            id: poll.id,
+            question: poll.question,
+            optionCount: poll.options.length,
+            totalVotes: poll.voterIPs.size,
+            createdAt: poll.startTime,
+            endedAt: poll.endTime || poll.startTime,
+            status: 'ended',
+            createdBy: poll.createdBy,
+            userType: poll.userType
+        }));
+    
+    res.json({
+        active: activeUserPolls,
+        history: historyUserPolls,
+        total: activeUserPolls.length + historyUserPolls.length
+    });
+});
+
+// 新增路由：用戶投票頁面
+app.get('/user/:userId', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'user.html'));
 });
 
 app.get('/vote/:pollId', (req, res) => {
@@ -88,7 +146,7 @@ app.get('/result/:pollId', (req, res) => {
 });
 
 app.post('/api/create-poll', async (req, res) => {
-    const { question, options, duration } = req.body;
+    const { question, options, duration, createdBy, userType } = req.body;
     
     if (!question || !options || !Array.isArray(options) || options.length < 2) {
         return res.status(400).json({ error: '問題和至少兩個選項是必需的' });
@@ -106,7 +164,9 @@ app.post('/api/create-poll', async (req, res) => {
         duration: duration * 60 * 1000,
         startTime: Date.now(),
         active: true,
-        voterIPs: new Set()
+        voterIPs: new Set(),
+        createdBy: createdBy || 'anonymous',
+        userType: userType || 'default'
     };
     
     polls.set(pollId, poll);
@@ -205,19 +265,23 @@ io.on('connection', (socket) => {
 
 // 定期清理過期投票（每小時檢查一次）
 setInterval(() => {
-    const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000); // 7天前
+    const currentTime = Date.now();
     let cleanedCount = 0;
     
     for (const [pollId, poll] of expiredPolls.entries()) {
         const endTime = poll.endTime || poll.startTime;
-        if (endTime < oneWeekAgo) {
+        const userType = poll.userType || 'default';
+        const retentionPeriod = userRetentionConfig[userType];
+        
+        // 檢查是否超過該用戶類型的保存期限
+        if (currentTime - endTime > retentionPeriod) {
             expiredPolls.delete(pollId);
             cleanedCount++;
         }
     }
     
     if (cleanedCount > 0) {
-        console.log(`已清理 ${cleanedCount} 個過期投票`);
+        console.log(`已清理 ${cleanedCount} 個過期投票（根據用戶類型差異化保存）`);
     }
 }, 60 * 60 * 1000); // 每小時執行一次
 

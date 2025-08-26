@@ -46,6 +46,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const question = document.getElementById('question').value.trim();
         const duration = parseInt(document.getElementById('duration').value);
+        const createdBy = document.getElementById('createdBy').value.trim();
+        const userType = document.getElementById('userType').value;
         const optionInputs = optionsContainer.querySelectorAll('input');
         const options = Array.from(optionInputs).map(input => input.value.trim()).filter(option => option);
 
@@ -63,7 +65,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({
                     question,
                     options,
-                    duration
+                    duration,
+                    createdBy: createdBy || 'anonymous',
+                    userType: userType
                 })
             });
 

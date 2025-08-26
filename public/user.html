@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用戶投票 - ChatVote</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🎭 ChatVote</h1>
+            <p class="subtitle">用戶投票查詢</p>
+        </header>
+        
+        <main>
+            <div id="loadingContainer" class="loading-container">
+                <div class="loading-spinner"></div>
+                <p>正在加載用戶投票...</p>
+            </div>
+            
+            <div id="userContainer" class="user-container" style="display: none;">
+                <div class="user-header">
+                    <h2 id="userName">用戶：<span id="userNameText"></span></h2>
+                    <div class="user-stats">
+                        <div class="stat">
+                            <span class="stat-label">活躍投票</span>
+                            <span class="stat-value" id="activeCount">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">歷史投票</span>
+                            <span class="stat-value" id="historyCount">0</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">總計投票</span>
+                            <span class="stat-value" id="totalCount">0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="polls-sections">
+                    <div id="activeSection" class="polls-section">
+                        <h3>🟢 活躍投票</h3>
+                        <div id="activePolls" class="polls-list">
+                            <!-- 活躍投票將顯示在這裡 -->
+                        </div>
+                        <div id="noActivePolls" class="no-polls" style="display: none;">
+                            <p>該用戶目前沒有活躍的投票</p>
+                        </div>
+                    </div>
+                    
+                    <div id="historySection" class="polls-section">
+                        <h3>📚 歷史投票</h3>
+                        <div id="historyPolls" class="polls-list">
+                            <!-- 歷史投票將顯示在這裡 -->
+                        </div>
+                        <div id="noHistoryPolls" class="no-polls" style="display: none;">
+                            <p>該用戶沒有歷史投票記錄</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="notFoundContainer" class="not-found" style="display: none;">
+                <h2>❌ 用戶不存在</h2>
+                <p>找不到該用戶的投票記錄</p>
+                <a href="/" class="btn-primary">回到首頁</a>
+            </div>
+            
+            <div id="errorContainer" class="error-container" style="display: none;">
+                <h2>⚠️ 載入失敗</h2>
+                <p id="errorMessage"></p>
+                <button onclick="location.reload()" class="btn-primary">重新載入</button>
+            </div>
+        </main>
+        
+        <footer class="site-footer">
+            <div class="footer-content">
+                <div class="footer-links">
+                    <span class="footer-label">快速連結：</span>
+                    <a href="/">建立投票</a>
+                    <a href="/polls">活動投票</a>
+                    <a href="/history">歷史投票</a>
+                </div>
+                <div class="footer-links">
+                    <span class="footer-label">維護資訊：</span>
+                    <a href="https://bashcat.net" target="_blank">🐱 BASHCAT.NET</a>
+                    <a href="https://hackmd.io/@BASHCAT" target="_blank">HackMD</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 ChatVote - 直播互動投票系統 | 由 <a href="https://bashcat.net" target="_blank">Bashcat</a> 維護</p>
+            </div>
+        </footer>
+    </div>
+    
+    <script src="/js/user.js"></script>
+</body>
+</html>

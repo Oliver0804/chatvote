@@ -36,11 +36,21 @@ function displayPolls(polls) {
         <div class="poll-card">
             <div class="poll-header">
                 <h3 class="poll-question">${poll.question}</h3>
-                <div class="poll-time">
+                <div class="poll-badges">
                     <span class="time-remaining">${formatTimeRemaining(poll.timeRemaining)}</span>
+                    <span class="user-type-badge ${poll.userType || 'default'}">${getUserTypeName(poll.userType)}</span>
                 </div>
             </div>
             <div class="poll-stats">
+                <div class="stat">
+                    <span class="stat-label">創建者</span>
+                    <span class="stat-value">
+                        ${poll.createdBy === 'anonymous' ? 
+                            '匿名用戶' : 
+                            `<a href="/user/${encodeURIComponent(poll.createdBy)}" class="user-link">${poll.createdBy}</a>`
+                        }
+                    </span>
+                </div>
                 <div class="stat">
                     <span class="stat-label">選項數量</span>
                     <span class="stat-value">${poll.optionCount}</span>
@@ -98,6 +108,15 @@ function formatCreatedTime(timestamp) {
             });
         }
     }
+}
+
+function getUserTypeName(userType) {
+    const typeMap = {
+        'default': '一般用戶',
+        'premium': '高級用戶',
+        'vip': 'VIP用戶'
+    };
+    return typeMap[userType] || '一般用戶';
 }
 
 function refreshPolls() {

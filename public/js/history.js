@@ -46,10 +46,22 @@ document.addEventListener('DOMContentLoaded', function() {
         card.innerHTML = `
             <div class="poll-header">
                 <h3 class="poll-question">${poll.question}</h3>
-                <span class="poll-status ended">已結束</span>
+                <div class="poll-badges">
+                    <span class="poll-status ended">已結束</span>
+                    <span class="user-type-badge ${poll.userType || 'default'}">${getUserTypeName(poll.userType)}</span>
+                </div>
             </div>
             <div class="poll-info">
                 <div class="poll-stats">
+                    <div class="stat">
+                        <span class="stat-label">創建者</span>
+                        <span class="stat-value">
+                            ${poll.createdBy === 'anonymous' ? 
+                                '匿名用戶' : 
+                                `<a href="/user/${encodeURIComponent(poll.createdBy)}" class="user-link">${poll.createdBy}</a>`
+                            }
+                        </span>
+                    </div>
                     <div class="stat">
                         <span class="stat-label">選項數量</span>
                         <span class="stat-value">${poll.optionCount}</span>
@@ -74,6 +86,15 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
 
         return card;
+    }
+
+    function getUserTypeName(userType) {
+        const typeMap = {
+            'default': '一般用戶',
+            'premium': '高級用戶',
+            'vip': 'VIP用戶'
+        };
+        return typeMap[userType] || '一般用戶';
     }
 
     window.refreshHistory = function() {
