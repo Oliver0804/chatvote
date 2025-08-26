@@ -163,6 +163,45 @@ elif [ "$1" = "docker" ]; then
                 echo "📍 應用地址: http://localhost:$DOCKER_PORT"
             else
                 echo "❌ Docker 啟動失敗，使用開發模式..."
+                # 檢查端口衝突
+                if check_port $DOCKER_PORT; then
+                    echo "⚠️  端口 $DOCKER_PORT 仍被佔用，需要處理端口衝突"
+                    echo "請選擇處理方式："
+                    echo "1) 停止現有進程並使用端口 $DOCKER_PORT"
+                    echo "2) 使用其他端口"
+                    echo "3) 取消啟動"
+                    read -p "請選擇 (1/2/3): " choice
+                    
+                    case $choice in
+                        1)
+                            stop_port_process
+                            if check_port $DOCKER_PORT; then
+                                echo "❌ 無法停止佔用端口的進程，請手動處理"
+                                exit 1
+                            fi
+                            ;;
+                        2)
+                            while true; do
+                                read -p "請輸入新的端口號 (1024-65535): " new_port
+                                if validate_port $new_port; then
+                                    if ! check_port $new_port; then
+                                        DOCKER_PORT=$new_port
+                                        echo "✅ 將使用端口 $DOCKER_PORT"
+                                        break
+                                    else
+                                        echo "❌ 端口 $new_port 也被佔用，請選擇其他端口"
+                                    fi
+                                else
+                                    echo "❌ 無效的端口號，請輸入 1024-65535 之間的數字"
+                                fi
+                            done
+                            ;;
+                        3|*)
+                            echo "❌ 取消啟動"
+                            exit 1
+                            ;;
+                    esac
+                fi
                 export PORT=$DOCKER_PORT
                 npm run dev
             fi
@@ -173,11 +212,89 @@ elif [ "$1" = "docker" ]; then
             echo "📍 應用地址: http://localhost:$DOCKER_PORT"
         else
             echo "❌ Docker 啟動失敗，使用開發模式..."
+            # 檢查端口衝突
+            if check_port $DOCKER_PORT; then
+                echo "⚠️  端口 $DOCKER_PORT 仍被佔用，需要處理端口衝突"
+                echo "請選擇處理方式："
+                echo "1) 停止現有進程並使用端口 $DOCKER_PORT"
+                echo "2) 使用其他端口"
+                echo "3) 取消啟動"
+                read -p "請選擇 (1/2/3): " choice
+                
+                case $choice in
+                    1)
+                        stop_port_process
+                        if check_port $DOCKER_PORT; then
+                            echo "❌ 無法停止佔用端口的進程，請手動處理"
+                            exit 1
+                        fi
+                        ;;
+                    2)
+                        while true; do
+                            read -p "請輸入新的端口號 (1024-65535): " new_port
+                            if validate_port $new_port; then
+                                if ! check_port $new_port; then
+                                    DOCKER_PORT=$new_port
+                                    echo "✅ 將使用端口 $DOCKER_PORT"
+                                    break
+                                else
+                                    echo "❌ 端口 $new_port 也被佔用，請選擇其他端口"
+                                fi
+                            else
+                                echo "❌ 無效的端口號，請輸入 1024-65535 之間的數字"
+                            fi
+                        done
+                        ;;
+                    3|*)
+                        echo "❌ 取消啟動"
+                        exit 1
+                        ;;
+                esac
+            fi
             export PORT=$DOCKER_PORT
             npm run dev
         fi
     else
         echo "❌ Docker Compose 不可用，使用開發模式..."
+        # 檢查端口衝突
+        if check_port $DOCKER_PORT; then
+            echo "⚠️  端口 $DOCKER_PORT 仍被佔用，需要處理端口衝突"
+            echo "請選擇處理方式："
+            echo "1) 停止現有進程並使用端口 $DOCKER_PORT"
+            echo "2) 使用其他端口"
+            echo "3) 取消啟動"
+            read -p "請選擇 (1/2/3): " choice
+            
+            case $choice in
+                1)
+                    stop_port_process
+                    if check_port $DOCKER_PORT; then
+                        echo "❌ 無法停止佔用端口的進程，請手動處理"
+                        exit 1
+                    fi
+                    ;;
+                2)
+                    while true; do
+                        read -p "請輸入新的端口號 (1024-65535): " new_port
+                        if validate_port $new_port; then
+                            if ! check_port $new_port; then
+                                DOCKER_PORT=$new_port
+                                echo "✅ 將使用端口 $DOCKER_PORT"
+                                break
+                            else
+                                echo "❌ 端口 $new_port 也被佔用，請選擇其他端口"
+                            fi
+                        else
+                            echo "❌ 無效的端口號，請輸入 1024-65535 之間的數字"
+                        fi
+                    done
+                    ;;
+                3|*)
+                    echo "❌ 取消啟動"
+                    exit 1
+                    ;;
+            esac
+        fi
         export PORT=$DOCKER_PORT
         npm run dev
     fi
