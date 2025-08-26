@@ -17,7 +17,7 @@ services:
   chatvote:
     build: .
     ports:
-      - "3000:3000"  # 僅內部網路訪問
+      - "3006:3000"  # 僅內部網路訪問
     environment:
       - NODE_ENV=production
       - PORT=3000

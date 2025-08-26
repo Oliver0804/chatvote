@@ -104,7 +104,7 @@ get_last_port() {
             return 0
         fi
     fi
-    echo "3000"
+    echo "3006"
 }
 
 # 停止 ChatVote 服務
@@ -132,7 +132,7 @@ stop_chatvote_service() {
     fi
     
     # 停止其他常見端口的 Node.js 進程
-    for port in 3000 3001 3002 3003 3004 3005 3006; do
+    for port in 3006 3000 3001 3002 3003 3004 3005; do
         if check_port "$port"; then
             local pid=$(lsof -ti:$port 2>/dev/null | head -1)
             if [ -n "$pid" ]; then
