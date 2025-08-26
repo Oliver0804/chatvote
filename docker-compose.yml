@@ -15,7 +15,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    volumes:
+    volumes: []
       # 如果需要持久化資料，可以取消註解下面這行
       # - ./data:/app/data
     networks:
