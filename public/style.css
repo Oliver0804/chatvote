@@ -893,7 +893,37 @@ main .not-found {
     
     .chart-container {
         max-width: 100%;
+        min-height: 250px;
+        padding: 15px;
     }
+    
+    .chart-container canvas {
+        height: 250px !important;
+        max-height: 250px;
+    }
+}
+
+/* 特別針對小螢幕手機優化 */
+@media (max-width: 480px) {
+    .chart-container {
+        min-height: 200px;
+        padding: 10px;
+    }
+    
+    .chart-container canvas {
+        height: 200px !important;
+        max-height: 200px;
+    }
+    
+    .results-table {
+        font-size: 0.9rem;
+    }
+    
+    .results-table th,
+    .results-table td {
+        padding: 8px 4px;
+    }
+}
     
     .polls-sections {
         grid-template-columns: 1fr;
