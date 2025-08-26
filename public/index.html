@@ -12,9 +12,26 @@
             <h1>🗳️ ChatVote 直播互動投票</h1>
             <nav class="nav-links">
                 <a href="/" class="btn-link active">建立投票</a>
-                <a href="/polls" class="btn-link">活動投票</a>
+                <a href="/polls" class="btn-link">進行中投票</a>
             </nav>
         </header>
+        
+        <!-- Google AdSense 廣告區塊 -->
+        <div class="ad-container">
+            <!-- 這裡放置 Google AdSense 代碼 -->
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5218895047629495"
+                    crossorigin="anonymous"></script>
+            <!-- 橫幅廣告 -->
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-5218895047629495"
+                 data-ad-slot="YOUR_AD_SLOT_ID"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+        </div>
         
         <main>
             <div id="createForm" class="form-container">
@@ -41,21 +58,9 @@
                         <button type="button" id="addOption" class="btn-secondary">+ 新增選項</button>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="createdBy">用戶 ID（可選）：</label>
-                        <input type="text" id="createdBy" placeholder="例如：oliver0804" maxlength="50">
-                        <small class="form-hint">用於分類和查詢您的投票，不填寫則為匿名</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="userType">用戶類型：</label>
-                        <select id="userType">
-                            <option value="default">一般用戶（保存7天）</option>
-                            <option value="premium">高級用戶（保存14天）</option>
-                            <option value="vip">VIP用戶（保存30天）</option>
-                        </select>
-                        <small class="form-hint">不同用戶類型有不同的數據保存期限</small>
-                    </div>
+                    <!-- 隱藏的用戶設定，使用預設值 -->
+                    <input type="hidden" id="createdBy" value="oliver0804">
+                    <input type="hidden" id="userType" value="default">
                     
                     <div class="form-group">
                         <label for="duration">投票時間（分鐘）：</label>
@@ -90,7 +95,7 @@
                 <div class="footer-links">
                     <span class="footer-label">快速連結：</span>
                     <a href="/">建立投票</a>
-                    <a href="/polls">活動投票</a>
+                    <a href="/polls">進行中投票</a>
                     <a href="/history">歷史投票</a>
                 </div>
                 <div class="footer-links">
@@ -100,8 +105,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2025 ChatVote - 直播互動投票系統 | 由 <a href="https://bashcat.net" target="_blank">Bashcat</a> 維護</p>
-                <p class="version-info">v2.0.0</p>
+                <p>&copy; 2025 ChatVote - 直播互動投票系統 | 由 <a href="https://bashcat.net" target="_blank">Bashcat</a> 維護 | <span class="version-info">v2.0.0</span></p>
             </div>
         </footer>
     </div>

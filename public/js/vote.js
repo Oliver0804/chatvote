@@ -120,8 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok) {
                 hasVoted = true;
                 showVoted();
-                // 重新載入投票資料以獲取最新結果
-                await loadPollForResults();
+                // 不需要重新載入，等待 Socket.io 的即時更新
             } else {
                 alert(result.error || '投票失敗');
             }
@@ -165,30 +164,34 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateLiveResults(data) {
-        if (!hasVoted) return;
-
         const { options, totalVotes } = data;
         poll.options = options;
 
-        // 更新統計
-        const statsDiv = document.getElementById('liveStats');
-        statsDiv.innerHTML = `
-            <p><strong>總投票數: ${totalVotes}</strong></p>
-            <div class="results-list">
-                ${options.map(option => `
-                    <div class="result-item">
-                        <span class="option-name">${option.text}</span>
-                        <span class="vote-count">${option.votes} 票</span>
-                        <span class="percentage">(${totalVotes > 0 ? ((option.votes / totalVotes) * 100).toFixed(1) : 0}%)</span>
-                    </div>
-                `).join('')}
-            </div>
-        `;
+        // 只有在已投票狀態下才更新即時結果顯示
+        if (hasVoted) {
+            // 更新統計
+            const statsDiv = document.getElementById('liveStats');
+            statsDiv.innerHTML = `
+                <p><strong>總投票數: ${totalVotes}</strong></p>
+                <div class="results-list">
+                    ${options.map(option => `
+                        <div class="result-item">
+                            <span class="option-name">${option.text}</span>
+                            <span class="vote-count">${option.votes} 票</span>
+                            <span class="percentage">(${totalVotes > 0 ? ((option.votes / totalVotes) * 100).toFixed(1) : 0}%)</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
 
-        // 更新圓餅圖
-        if (totalVotes > 0) {
-            updateChart(options, totalVotes);
+            // 更新圓餅圖
+            if (totalVotes > 0) {
+                updateChart(options, totalVotes);
+            }
         }
+        
+        // 總是更新總票數顯示（即使還沒投票）
+        document.getElementById('totalVotes').textContent = totalVotes;
     }
 
     function updateChart(options, totalVotes) {

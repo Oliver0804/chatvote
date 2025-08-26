@@ -94,17 +94,43 @@ app.get('/api/history-polls', async (req, res) => {
     try {
         const historyPolls = await getHistoryPolls();
         
-        const formattedPolls = historyPolls.map(poll => ({
-            id: poll.id,
-            question: poll.question,
-            optionCount: poll.options.length,
-            totalVotes: poll.total_votes || 0,
-            createdAt: new Date(poll.created_at).getTime(),
-            endedAt: new Date(poll.expires_at).getTime(),
-            status: 'ended',
-            createdBy: poll.created_by || 'anonymous',
-            userType: poll.user_type || 'default'
-        }));
+        const formattedPolls = historyPolls.map(poll => {
+            // 計算最高票選項
+            let winnerOption = '無投票';
+            let maxVotes = 0;
+            
+            // console.log('處理投票:', poll.id, 'options:', poll.options, 'votes:', poll.votes);
+            
+            if (poll.options && poll.votes) {
+                // 處理不同的選項格式
+                const options = Array.isArray(poll.options) ? poll.options : [];
+                
+                options.forEach((option, index) => {
+                    // 選項可能是字串或物件
+                    const optionText = typeof option === 'string' ? option : (option.text || option);
+                    const votes = parseInt(poll.votes[optionText] || 0);
+                    
+                    if (votes > maxVotes) {
+                        maxVotes = votes;
+                        winnerOption = optionText;
+                    }
+                });
+            }
+            
+            return {
+                id: poll.id,
+                question: poll.question,
+                optionCount: (poll.options || []).length,
+                totalVotes: poll.total_votes || 0,
+                createdAt: new Date(poll.created_at).getTime(),
+                endedAt: new Date(poll.expires_at).getTime(),
+                status: 'ended',
+                createdBy: poll.created_by || 'anonymous',
+                userType: poll.user_type || 'default',
+                winnerOption: winnerOption,
+                winnerVotes: maxVotes
+            };
+        });
         
         res.json(formattedPolls);
     } catch (error) {

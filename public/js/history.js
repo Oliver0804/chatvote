@@ -71,8 +71,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span class="stat-value">${poll.totalVotes}</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-label">建立時間</span>
-                        <span class="stat-value">${createdTime}</span>
+                        <span class="stat-label">投票結果</span>
+                        <span class="stat-value">${poll.winnerOption || '無投票'} ${poll.winnerVotes > 0 ? `(${poll.winnerVotes}票)` : ''}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">結束時間</span>
