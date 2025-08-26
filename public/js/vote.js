@@ -183,6 +183,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateLiveResults(data) {
         const { options, totalVotes } = data;
         poll.options = options;
+        
+        // 總是更新總票數顯示（即使還沒投票）
+        document.getElementById('totalVotes').textContent = totalVotes;
 
         // 只有在已投票狀態下才更新即時結果顯示
         if (hasVoted) {
@@ -206,9 +209,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateChart(options, totalVotes);
             }
         }
-        
-        // 總是更新總票數顯示（即使還沒投票）
-        document.getElementById('totalVotes').textContent = totalVotes;
     }
 
     function updateChart(options, totalVotes) {
