@@ -1,6 +1,6 @@
 {
   "name": "chatvote",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "ChatVote - 互動投票系統，支援即時投票與結果分享",
   "main": "server.js",
   "scripts": {
