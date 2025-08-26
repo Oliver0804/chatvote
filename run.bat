@@ -11,9 +11,33 @@ if "%1"=="dev" (
     npm run dev
 ) else if "%1"=="docker" (
     echo 🐳 使用 Docker 啟動...
-    docker-compose up -d
-    echo ✅ Docker 容器已啟動
-    echo 📍 應用地址: http://localhost:3000
+    
+    REM 檢查 Docker 是否可用
+    docker --version >nul 2>&1
+    if errorlevel 1 (
+        echo ❌ Docker 未安裝或不可用
+        echo 請安裝 Docker Desktop 後再試
+        echo 🚀 使用開發模式啟動...
+        npm run dev
+        goto :eof
+    )
+    
+    REM 嘗試啟動 Docker Compose
+    docker-compose up -d >nul 2>&1
+    if errorlevel 1 (
+        echo ❌ Docker Compose 啟動失敗，嘗試新版指令...
+        docker compose up -d >nul 2>&1
+        if errorlevel 1 (
+            echo ❌ Docker 啟動失敗，使用開發模式...
+            npm run dev
+        ) else (
+            echo ✅ Docker 容器已啟動
+            echo 📍 應用地址: http://localhost:3000
+        )
+    ) else (
+        echo ✅ Docker 容器已啟動
+        echo 📍 應用地址: http://localhost:3000
+    )
 ) else if "%1"=="build" (
     echo 🔨 構建 Docker 映像...
     docker build -t chatvote .
