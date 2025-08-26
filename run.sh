@@ -10,11 +10,28 @@ echo ""
 # 檢查端口是否被佔用
 check_port() {
     local port=${1:-3000}
-    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
-        return 0  # 端口被佔用
-    else
-        return 1  # 端口空閒
+    # 先嘗試 lsof
+    if command -v lsof >/dev/null 2>&1; then
+        if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+            return 0  # 端口被佔用
+        fi
     fi
+    
+    # 備選方案：使用 netstat
+    if command -v netstat >/dev/null 2>&1; then
+        if netstat -an | grep -q ":$port.*LISTEN"; then
+            return 0  # 端口被佔用
+        fi
+    fi
+    
+    # 最後備選：嘗試連接
+    if command -v nc >/dev/null 2>&1; then
+        if nc -z localhost $port >/dev/null 2>&1; then
+            return 0  # 端口被佔用
+        fi
+    fi
+    
+    return 1  # 端口空閒
 }
 
 # 驗證端口號碼
