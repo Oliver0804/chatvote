@@ -9,10 +9,21 @@ echo ""
 
 # 檢查端口是否被佔用
 check_port() {
-    if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    local port=${1:-3000}
+    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
         return 0  # 端口被佔用
     else
         return 1  # 端口空閒
+    fi
+}
+
+# 驗證端口號碼
+validate_port() {
+    local port=$1
+    if [[ $port =~ ^[0-9]+$ ]] && [ $port -ge 1024 ] && [ $port -le 65535 ]; then
+        return 0  # 有效端口
+    else
+        return 1  # 無效端口
     fi
 }
 
@@ -36,18 +47,46 @@ stop_port_process() {
 if [ "$1" = "dev" ]; then
     echo "🚀 啟動開發模式..."
     
-    # 檢查端口衝突
-    if check_port; then
-        echo "⚠️  端口 3000 已被佔用"
-        read -p "是否停止現有進程並繼續？(y/N): " response
-        if [ "$response" = "y" ] || [ "$response" = "Y" ]; then
-            stop_port_process
-        else
-            echo "❌ 取消啟動"
-            exit 1
-        fi
+    # 檢查端口衝突並處理
+    PORT=3000
+    if check_port $PORT; then
+        echo "⚠️  端口 $PORT 已被佔用"
+        echo "請選擇處理方式："
+        echo "1) 停止現有進程並使用端口 $PORT"
+        echo "2) 使用其他端口"
+        echo "3) 取消啟動"
+        read -p "請選擇 (1/2/3): " choice
+        
+        case $choice in
+            1)
+                stop_port_process
+                ;;
+            2)
+                while true; do
+                    read -p "請輸入新的端口號 (1024-65535): " new_port
+                    if validate_port $new_port; then
+                        if ! check_port $new_port; then
+                            PORT=$new_port
+                            echo "✅ 將使用端口 $PORT"
+                            break
+                        else
+                            echo "❌ 端口 $new_port 也被佔用，請選擇其他端口"
+                        fi
+                    else
+                        echo "❌ 無效的端口號，請輸入 1024-65535 之間的數字"
+                    fi
+                done
+                ;;
+            3|*)
+                echo "❌ 取消啟動"
+                exit 1
+                ;;
+        esac
     fi
     
+    # 設定環境變數並啟動
+    export PORT=$PORT
+    echo "🚀 在端口 $PORT 啟動開發模式..."
     npm run dev
 elif [ "$1" = "docker" ]; then
     echo "🐳 使用 Docker 啟動..."
@@ -71,31 +110,75 @@ elif [ "$1" = "docker" ]; then
         exit 0
     fi
     
+    # 檢查端口並處理衝突
+    DOCKER_PORT=3000
+    if check_port $DOCKER_PORT; then
+        echo "⚠️  端口 $DOCKER_PORT 已被佔用"
+        echo "請選擇處理方式："
+        echo "1) 停止現有進程並使用端口 $DOCKER_PORT"
+        echo "2) 使用其他端口"
+        echo "3) 取消啟動"
+        read -p "請選擇 (1/2/3): " choice
+        
+        case $choice in
+            1)
+                stop_port_process
+                ;;
+            2)
+                while true; do
+                    read -p "請輸入新的端口號 (1024-65535): " new_port
+                    if validate_port $new_port; then
+                        if ! check_port $new_port; then
+                            DOCKER_PORT=$new_port
+                            echo "✅ 將使用端口 $DOCKER_PORT"
+                            break
+                        else
+                            echo "❌ 端口 $new_port 也被佔用，請選擇其他端口"
+                        fi
+                    else
+                        echo "❌ 無效的端口號，請輸入 1024-65535 之間的數字"
+                    fi
+                done
+                ;;
+            3|*)
+                echo "❌ 取消啟動"
+                exit 1
+                ;;
+        esac
+    fi
+    
+    # 設定環境變數並啟動 Docker
+    export EXTERNAL_PORT=$DOCKER_PORT
+    echo "🐳 在端口 $DOCKER_PORT 啟動 Docker 容器..."
+    
     # 嘗試使用 docker-compose 或 docker compose
     if command -v docker-compose &> /dev/null; then
-        if docker-compose up -d 2>/dev/null; then
+        if EXTERNAL_PORT=$DOCKER_PORT docker-compose up -d 2>/dev/null; then
             echo "✅ Docker 容器已啟動"
-            echo "📍 應用地址: http://localhost:3000"
+            echo "📍 應用地址: http://localhost:$DOCKER_PORT"
         else
             echo "❌ Docker Compose 啟動失敗，嘗試使用新版指令..."
-            if docker compose up -d 2>/dev/null; then
+            if EXTERNAL_PORT=$DOCKER_PORT docker compose up -d 2>/dev/null; then
                 echo "✅ Docker 容器已啟動"
-                echo "📍 應用地址: http://localhost:3000"
+                echo "📍 應用地址: http://localhost:$DOCKER_PORT"
             else
                 echo "❌ Docker 啟動失敗，使用開發模式..."
+                export PORT=$DOCKER_PORT
                 npm run dev
             fi
         fi
     elif docker compose version &> /dev/null; then
-        if docker compose up -d; then
+        if EXTERNAL_PORT=$DOCKER_PORT docker compose up -d; then
             echo "✅ Docker 容器已啟動"
-            echo "📍 應用地址: http://localhost:3000"
+            echo "📍 應用地址: http://localhost:$DOCKER_PORT"
         else
             echo "❌ Docker 啟動失敗，使用開發模式..."
+            export PORT=$DOCKER_PORT
             npm run dev
         fi
     else
         echo "❌ Docker Compose 不可用，使用開發模式..."
+        export PORT=$DOCKER_PORT
         npm run dev
     fi
 elif [ "$1" = "build" ]; then
