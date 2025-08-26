@@ -3,8 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>建立投票 - ChatVote 互動投票</title>
+    <title>ChatVote - 免費線上投票系統 | 即時互動投票平台</title>
+    <meta name="description" content="ChatVote 是專為直播主和聊天室設計的免費線上投票系統，支援即時投票、QR Code 分享、圓餅圖結果顯示。輕鬆建立互動投票，增加觀眾參與度！">
+    <meta name="keywords" content="線上投票,投票系統,直播投票,即時投票,互動投票,免費投票,ChatVote,投票平台,QR Code投票">
+    <meta name="author" content="Bashcat">
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="https://vote.bashcat.net/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://vote.bashcat.net/">
+    <meta property="og:title" content="ChatVote - 免費線上投票系統 | 即時互動投票平台">
+    <meta property="og:description" content="ChatVote 是專為直播主和聊天室設計的免費線上投票系統，支援即時投票、QR Code 分享、圓餅圖結果顯示。輕鬆建立互動投票，增加觀眾參與度！">
+    <meta property="og:image" content="https://vote.bashcat.net/images/og-image.png">
+    <meta property="og:site_name" content="ChatVote">
+    <meta property="og:locale" content="zh_TW">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://vote.bashcat.net/">
+    <meta name="twitter:title" content="ChatVote - 免費線上投票系統 | 即時互動投票平台">
+    <meta name="twitter:description" content="ChatVote 是專為直播主和聊天室設計的免費線上投票系統，支援即時投票、QR Code 分享、圓餅圖結果顯示。輕鬆建立互動投票，增加觀眾參與度！">
+    <meta name="twitter:image" content="https://vote.bashcat.net/images/og-image.png">
+    
     <link rel="stylesheet" href="/style.css">
+    <!-- JSON-LD 結構化資料 -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "ChatVote",
+        "description": "ChatVote 是專為直播主和聊天室設計的免費線上投票系統，支援即時投票、QR Code 分享、圓餅圖結果顯示。",
+        "url": "https://vote.bashcat.net/",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Any",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "author": {
+            "@type": "Person",
+            "name": "Bashcat",
+            "url": "https://bashcat.net"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Bashcat",
+            "url": "https://bashcat.net"
+        },
+        "featureList": [
+            "即時投票系統",
+            "QR Code 分享",
+            "圓餅圖結果顯示",
+            "直播互動功能",
+            "移動端支援"
+        ]
+    }
+    </script>
+    
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5218895047629495"
             crossorigin="anonymous"></script>
 </head>
@@ -44,7 +101,7 @@
         <main>
             <div id="createForm" class="form-container">
                 <h2>📝 建立投票</h2>
-                <p class="form-description">建立即時互動投票，支援 QR Code 快速分享！</p>
+                <p class="form-description">建立即時互動投票，支援 QR Code 快速分享！適合直播主、聊天室、會議投票使用。</p>
                 <form id="pollForm">
                     <div class="form-group">
                         <label for="question">投票問題：</label>

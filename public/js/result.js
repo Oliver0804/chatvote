@@ -155,23 +155,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
+                    maintainAspectRatio: true,
+                    aspectRatio: 1,
                     plugins: {
                         legend: {
                             position: 'bottom',
                             labels: {
-                                boxWidth: 12,
-                                padding: 15,
+                                boxWidth: window.innerWidth <= 480 ? 10 : 12,
+                                padding: window.innerWidth <= 480 ? 8 : 15,
                                 font: {
-                                    size: window.innerWidth <= 480 ? 12 : 14
+                                    size: window.innerWidth <= 480 ? 11 : window.innerWidth <= 768 ? 12 : 14
                                 }
                             }
                         }
                     },
                     layout: {
                         padding: {
-                            top: 10,
-                            bottom: 10
+                            top: 5,
+                            bottom: 5,
+                            left: 5,
+                            right: 5
                         }
                     }
                 }

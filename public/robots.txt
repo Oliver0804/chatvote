@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /socket.io/
+
+# 允許搜尋引擎索引主要頁面
+Allow: /
+Allow: /polls
+Allow: /history
+
+# Sitemap 位置
+Sitemap: https://vote.bashcat.net/sitemap.xml
+
+# 抓取延遲（可選）
+Crawl-delay: 1
