@@ -992,6 +992,15 @@ main {
     text-decoration: underline;
 }
 
+.version-info {
+    margin-top: 8px;
+    font-size: 0.75rem;
+    color: #a0aec0;
+    font-family: 'Courier New', monospace;
+    opacity: 0.7;
+    margin-bottom: 0;
+}
+
 /* History Page Styles */
 .history-info {
     background: rgba(59, 130, 246, 0.1);
