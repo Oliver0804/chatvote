@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             poll = await response.json();
+            console.log('載入的投票數據:', poll);
             displayResults();
         } catch (error) {
             console.error('載入投票失敗:', error);
@@ -50,6 +51,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }));
         
         const totalVotes = formattedOptions.reduce((sum, option) => sum + option.votes, 0);
+        
+        console.log('格式化後的選項:', formattedOptions);
+        console.log('總投票數:', totalVotes);
         
         updateResults({
             options: formattedOptions,
@@ -112,7 +116,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateChart(options, totalVotes) {
+        console.log('更新圓餅圖 - 選項:', options, '總票數:', totalVotes);
+        
         if (totalVotes === 0) {
+            console.log('總票數為0，顯示暫無數據');
             const canvas = document.getElementById('pieChart');
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);

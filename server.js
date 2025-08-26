@@ -283,10 +283,20 @@ app.get('/api/poll/:pollId', async (req, res) => {
         const isActive = poll.is_active && new Date(poll.expires_at) > new Date();
         const timeRemaining = isActive ? Math.max(0, new Date(poll.expires_at) - Date.now()) : 0;
         
+        // 格式化選項數據，確保包含投票數
+        const formattedOptions = poll.options.map(option => {
+            const optionText = typeof option === 'string' ? option : (option.text || option);
+            const votes = poll.votes ? (poll.votes[optionText] || 0) : (option.votes || 0);
+            return {
+                text: optionText,
+                votes: parseInt(votes) || 0
+            };
+        });
+
         res.json({
             id: poll.id,
             question: poll.question,
-            options: poll.options,
+            options: formattedOptions,
             active: isActive,
             timeRemaining
         });
