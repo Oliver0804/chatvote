@@ -40,8 +40,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const card = document.createElement('div');
         card.className = 'poll-card ended';
 
-        const createdTime = new Date(poll.createdAt).toLocaleString('zh-TW');
-        const endedTime = new Date(poll.endedAt).toLocaleString('zh-TW');
+        const createdTime = new Date(poll.createdAt).toLocaleDateString('zh-TW') + ' ' + new Date(poll.createdAt).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+        const endedTime = new Date(poll.endedAt).toLocaleDateString('zh-TW') + ' ' + new Date(poll.endedAt).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
 
         card.innerHTML = `
             <div class="poll-header">

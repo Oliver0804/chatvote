@@ -43,9 +43,17 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('resultUrl').value = window.location.href;
         
         updateStatusBadge();
+        // 確保選項有正確的投票數格式
+        const formattedOptions = poll.options.map(option => ({
+            text: typeof option === 'string' ? option : (option.text || option),
+            votes: typeof option === 'string' ? 0 : (option.votes || 0)
+        }));
+        
+        const totalVotes = formattedOptions.reduce((sum, option) => sum + option.votes, 0);
+        
         updateResults({
-            options: poll.options,
-            totalVotes: poll.options.reduce((sum, option) => sum + option.votes, 0)
+            options: formattedOptions,
+            totalVotes: totalVotes
         });
     }
 

@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const card = document.createElement('div');
         card.className = `poll-card ${poll.status}`;
         
-        const createdTime = new Date(poll.createdAt).toLocaleString('zh-TW');
+        const createdTime = new Date(poll.createdAt).toLocaleDateString('zh-TW') + ' ' + new Date(poll.createdAt).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
         const userTypeName = getUserTypeName(poll.userType);
         
         let timeInfo = '';
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <a href="/result/${poll.id}" class="btn-secondary" target="_blank">查看結果</a>
             `;
         } else {
-            const endedTime = new Date(poll.endedAt).toLocaleString('zh-TW');
+            const endedTime = new Date(poll.endedAt).toLocaleDateString('zh-TW') + ' ' + new Date(poll.endedAt).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
             timeInfo = `<div class="stat">
                 <span class="stat-label">結束時間</span>
                 <span class="stat-value">${endedTime}</span>
