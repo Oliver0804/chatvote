@@ -53,6 +53,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const optionsContainer = document.getElementById('optionsContainer');
         optionsContainer.innerHTML = '';
+        
+        // 根據選項數量添加對應的 CSS 類別
+        const optionCount = poll.options.length;
+        optionsContainer.className = `options-container options-${optionCount}`;
 
         poll.options.forEach((option, index) => {
             console.log(`建立選項 ${index}: ${option.text}`);

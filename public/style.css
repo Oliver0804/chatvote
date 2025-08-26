@@ -372,6 +372,59 @@ main .not-found {
     display: grid;
     gap: 15px;
     margin-bottom: 30px;
+    /* 動態網格佈局 - 最多2行，根據選項數量自動調整列數 */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    max-width: 100%;
+}
+
+/* 2個選項：1行2列 */
+.options-container.options-2 {
+    grid-template-columns: 1fr 1fr;
+    max-width: 600px;
+    margin: 0 auto 30px;
+}
+
+/* 3-4個選項：2行2列 */
+.options-container.options-3,
+.options-container.options-4 {
+    grid-template-columns: 1fr 1fr;
+    max-width: 600px;
+    margin: 0 auto 30px;
+}
+
+/* 5-6個選項：2行3列 */
+.options-container.options-5,
+.options-container.options-6 {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 800px;
+    margin: 0 auto 30px;
+}
+
+/* 7-8個選項：2行4列 */
+.options-container.options-7,
+.options-container.options-8 {
+    grid-template-columns: repeat(4, 1fr);
+    max-width: 1000px;
+    margin: 0 auto 30px;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .options-container.options-3,
+    .options-container.options-4,
+    .options-container.options-5,
+    .options-container.options-6,
+    .options-container.options-7,
+    .options-container.options-8 {
+        grid-template-columns: 1fr 1fr;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .options-container {
+        grid-template-columns: 1fr;
+    }
 }
 
 .option-button {
